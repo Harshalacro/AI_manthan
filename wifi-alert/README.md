@@ -27,6 +27,24 @@ that laptop can switch its hotspot. The page sends nothing to it until the
 button is pressed. Chrome may ask once to let the site reach devices on your
 local network: allow it.
 
+### Start it automatically at login
+
+So the website's button always works, without starting anything by hand:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File install-startup.ps1
+```
+
+This adds a shortcut to your Windows Startup folder (your account only) and
+starts it now. It runs hidden, with no window: it only waits at
+http://localhost:8091 and touches the hotspot when Broadcast is pressed. It
+logs to `wifi_alert.log` in this folder. `start-hidden.vbs` is what the
+shortcut runs; double-click it to start it by hand. Undo with
+`uninstall-startup.ps1`.
+
+If you sign out while broadcasting, Windows ends it before it can restore the
+hotspot name: press Stop first.
+
 | Option | Default | Meaning |
 |---|---|---|
 | `--place` | `indore` | Location id |
@@ -42,6 +60,7 @@ local network: allow it.
 |---|---|
 | `wifi_alert.py` | Broadcast / Stop, the button page at :8091, and `POST /api/broadcast`, `/api/stop`, `GET /api/status` for the website |
 | `hotspot.py` | Renames and starts the Windows Mobile Hotspot; restores it |
+| `start-hidden.vbs`, `install-startup.ps1`, `uninstall-startup.ps1` | Run it hidden at every login, or stop doing so |
 | `portal.py` | The alert network name, the phone alert page (port 80), and the pop-up DNS |
 
 When a phone joins, it checks for internet. The pop-up DNS answers every name

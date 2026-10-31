@@ -32,7 +32,9 @@ import asyncio
 import html
 import json
 import logging
+import logging.handlers
 import math
+import sys
 import threading
 import time
 import urllib.request
@@ -318,6 +320,7 @@ async def main(a: argparse.Namespace) -> None:
             return list(s.warnings), s.place_name
 
     if not portal.start_web(current, a.web_port):
+        log.error("port %d is in use: is the Wi-Fi alert already running? Exiting.", a.web_port)
         raise SystemExit(f"Port {a.web_port} is in use. Is another alert station running?")
     # The pop-up DNS answers only while the hotspot carries this alert's name.
     portal.start_dns(s.dns, lambda: s.ssid() if s.broadcasting else "")
@@ -343,7 +346,12 @@ if __name__ == "__main__":
     ap.add_argument("--allow-origin", action="append", default=[], help="Another website allowed to press the button, e.g. https://my-iris.vercel.app")
     args = ap.parse_args()
     args.api = args.api.rstrip("/")
-    logging.basicConfig(level=logging.INFO, format="%(asctime)s %(message)s", datefmt="%H:%M:%S")
+    if sys.stderr is None:
+        # Started hidden (pythonw, at login): no console, so log beside the script.
+        handler = logging.handlers.RotatingFileHandler(Path(__file__).with_name("wifi_alert.log"), maxBytes=1_000_000, backupCount=1, encoding="utf-8")
+        logging.basicConfig(level=logging.INFO, format="%(asctime)s %(message)s", datefmt="%d %b %H:%M:%S", handlers=[handler])
+    else:
+        logging.basicConfig(level=logging.INFO, format="%(asctime)s %(message)s", datefmt="%H:%M:%S")
     try:
         asyncio.run(main(args))
     except KeyboardInterrupt:
