@@ -632,3 +632,58 @@
 .leaflet-tooltip.jd-plan-label::before {
   display: none;
 }
+
+/* ------------------------------------------------------- state-card weather skies
+   Animated sky behind a state card at rest (WeatherScene.jsx). */
+.sky { position: absolute; inset: 0; overflow: hidden; pointer-events: none; }
+.sky > * { position: absolute; }
+
+/* sun on the left, with slowly turning rays */
+.sky-sun { left: 10%; top: 50%; width: 46px; height: 46px; margin-top: -23px; border-radius: 999px;
+  background: radial-gradient(circle, #FFF6C2 0%, #FFD84A 55%, #FFB52E 100%);
+  box-shadow: 0 0 22px 8px rgba(255,214,74,.55), 0 0 60px 26px rgba(255,214,74,.22); }
+.sky-sun-rays { inset: -22px; border-radius: 999px;
+  background: repeating-conic-gradient(rgba(255,233,140,.45) 0 6deg, transparent 6deg 30deg);
+  -webkit-mask: radial-gradient(circle, transparent 30px, #000 31px, transparent 46px);
+          mask: radial-gradient(circle, transparent 30px, #000 31px, transparent 46px);
+  animation: sky-spin 24s linear infinite; }
+.sky-glow { left: 42%; top: -55%; width: 52%; height: 150%; border-radius: 999px;
+  background: radial-gradient(closest-side, rgba(255,240,190,.55), rgba(255,226,150,.22) 45%, transparent 75%);
+  animation: sky-breathe 6s ease-in-out infinite alternate; }
+@keyframes sky-breathe { from { opacity: .7; } to { opacity: 1; } }
+@keyframes sky-spin { to { transform: rotate(360deg); } }
+
+/* night */
+.sky-moon { left: 10%; top: 50%; width: 34px; height: 34px; margin-top: -17px; border-radius: 999px;
+  box-shadow: 9px -5px 0 0 #F4F1DE; filter: drop-shadow(0 0 8px rgba(244,241,222,.5)); }
+.sky-stars { inset: 0;
+  background-image: radial-gradient(1.6px 1.6px at 30% 25%, #fff, transparent), radial-gradient(1.2px 1.2px at 55% 60%, #fff, transparent),
+    radial-gradient(1.6px 1.6px at 72% 18%, #fff, transparent), radial-gradient(1px 1px at 88% 55%, #fff, transparent),
+    radial-gradient(1.4px 1.4px at 42% 80%, #fff, transparent), radial-gradient(1px 1px at 64% 85%, #fff, transparent);
+  animation: sky-twinkle 2.8s ease-in-out infinite alternate; }
+@keyframes sky-twinkle { from { opacity: .4; } to { opacity: 1; } }
+
+/* clouds: crisp SVG shapes drifting slowly */
+.sky-cloud { height: auto; animation: sky-drift ease-in-out infinite alternate; }
+@keyframes sky-drift { from { transform: translateX(-6%); } to { transform: translateX(10%); } }
+
+/* rain: drawn on a canvas (RainCanvas in WeatherScene.jsx) */
+.sky-canvas { inset: 0; width: 100%; height: 100%; }
+
+/* thunder: a bolt that strikes with a flash of the whole sky */
+.sky-bolt { top: 18%; width: 18px; height: 46px; opacity: 0; filter: drop-shadow(0 0 6px #FFF3A8); animation: sky-bolt 5.5s infinite; }
+.sky-flash { inset: 0; background: #E8EEFF; opacity: 0; animation: sky-flash 5.5s infinite; }
+@keyframes sky-bolt { 0%, 88%, 92%, 100% { opacity: 0; } 89%, 91% { opacity: 1; } }
+@keyframes sky-flash { 0%, 87%, 90%, 94%, 100% { opacity: 0; } 88% { opacity: .55; } 92% { opacity: .35; } }
+
+/* fog and snow */
+.sky-fog { left: -60%; top: 28%; width: 160%; height: 26%; background: linear-gradient(90deg, transparent, rgba(255,255,255,.55), transparent); animation: sky-drift 9s ease-in-out infinite alternate; }
+.sky-fog-2 { top: 60%; animation-duration: 12s; animation-direction: alternate-reverse; }
+.sky-snow { inset: -40% 0 0;
+  background-image: radial-gradient(2.2px 2.2px at 10px 10px, #fff, transparent), radial-gradient(1.6px 1.6px at 34px 30px, #fff, transparent);
+  background-size: 48px 48px; animation: sky-snow 3s linear infinite; }
+@keyframes sky-snow { to { background-position: 10px 48px; } }
+
+@media (prefers-reduced-motion: reduce) {
+  .sky *, .sky *::before, .sky *::after { animation: none !important; }
+}
