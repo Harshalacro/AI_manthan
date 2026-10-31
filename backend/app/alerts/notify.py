@@ -208,6 +208,10 @@ async def _post(client: httpx.AsyncClient, p: dict, event: str, payload: dict) -
     }
     # A designed HTML version for email steps (map the email body to `email_html`).
     body["email_html"] = email_template.render(body)
+    # Every event carries both SMS fields, so the SMS step never sends an empty body.
+    body["sms"] = _gsm(body.get("sms") or body.get("title") or APP_NAME)
+    body.setdefault("sms_short", body["sms"] if len(body["sms"]) <= SMS_SHORT_MAX
+                    else body["sms"][:SMS_SHORT_MAX - 3].rstrip() + "...")
     if "call" in channels:
         body["call_twiml"] = _call_twiml(body)
     status, detail = "no_webhook", "JALDRISHTI_NOTIFY_WEBHOOK is not set"
