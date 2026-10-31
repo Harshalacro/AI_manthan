@@ -5,7 +5,7 @@ import { roleName, scopeName } from '../lib/auth';
 /**
  * Notification settings: where this official receives alerts for their area.
  *
- * JalDrishti posts each alert to the automation webhook (viaSocket), which sends
+ * IRIS posts each alert to the automation webhook (viaSocket), which sends
  * the email / WhatsApp / SMS / call. Red alerts ask for a voice call; everything
  * says it comes from a research prototype.
  */
@@ -170,7 +170,7 @@ export default function NotificationsPage({ lang, user }) {
           </div>
 
           <div className="mt-6 flex flex-wrap gap-2 border-t border-ink-800 pt-4">
-            <button type="button" onClick={save} disabled={!!busy} className="btn border-chakra-500 bg-chakra-500 px-4 py-2 text-[13.5px] text-white hover:bg-[#123A78] hover:text-white">
+            <button type="button" onClick={save} disabled={!!busy} className="btn border-chakra-500 bg-chakra-500 px-4 py-2 text-[13.5px] text-white hover:bg-[#174A70] hover:text-white">
               {busy === 'save' ? L('Saving…', 'सहेजा जा रहा है…') : L('Save settings', 'सेटिंग सहेजें')}
             </button>
             <button type="button" onClick={test} disabled={!!busy || !data?.prefs} className="btn px-4 py-2 text-[13.5px]">
@@ -183,7 +183,7 @@ export default function NotificationsPage({ lang, user }) {
           <section className="rounded-2xl border border-ink-700 bg-white p-5 shadow-sm">
             <h2 className="text-[14px] font-extrabold text-chakra-500">{L('What you will get', 'आपको क्या मिलेगा')}</h2>
             <ul className="mt-3 space-y-2 text-[13px] text-ink-300">
-              <li>• {L('Every alert JalDrishti issues for your area, the moment it appears — places at risk, rivers above danger, flood waves on the way, official warnings', 'JalDrishti द्वारा आपके क्षेत्र हेतु जारी हर चेतावनी, तुरंत — जोखिम में स्थान, खतरे से ऊपर नदियाँ, आती बाढ़ लहरें, आधिकारिक चेतावनियाँ')}</li>
+              <li>• {L('Every alert IRIS issues for your area, the moment it appears — places at risk, rivers above danger, flood waves on the way, official warnings', 'IRIS द्वारा आपके क्षेत्र हेतु जारी हर चेतावनी, तुरंत — जोखिम में स्थान, खतरे से ऊपर नदियाँ, आती बाढ़ लहरें, आधिकारिक चेतावनियाँ')}</li>
               <li>• {L('Clear safety advice in each message: roads and underpasses to avoid, drink only boiled water, do not cross flood water, where to go', 'हर संदेश में सुरक्षा सलाह: किन सड़कों व अंडरपास से बचें, केवल उबला पानी पिएँ, बाढ़ का पानी पार न करें, कहाँ जाएँ')}</li>
               <li>• {L('A phone call for Red, if you ticked voice call', 'लाल स्तर पर फ़ोन कॉल, यदि आपने वॉइस कॉल चुना हो')}</li>
               <li>• {L('An “all clear” when the place is back to Green', 'स्थान के हरे पर लौटने पर "सब सामान्य"')}</li>

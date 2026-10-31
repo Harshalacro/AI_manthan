@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { api } from '../lib/api';
 import { relativeAge, tierColour, TIER_ORDER } from '../lib/format';
 import { t } from '../lib/i18n';
-import { AshokaChakra } from './Chrome';
+import { IrisMark } from './Chrome';
 
 /**
  * "How this is calculated" — the model card, the alert scale, the data sources
@@ -59,7 +59,7 @@ export default function SystemDialog({ lang, system, open, onClose }) {
         {/* header */}
         <div className="flex shrink-0 items-center gap-3 border-b border-ink-700/70 px-4 py-3">
           <span className="text-chakra-300">
-            <AshokaChakra size={22} />
+            <IrisMark size={22} />
           </span>
           <div className="min-w-0 flex-1">
             <h2 className={`text-sm font-bold text-chakra-500 ${lang === 'hi' ? 'font-devanagari' : ''}`}>

@@ -4,7 +4,7 @@ import { inScope, isAdmin, lastSeen, markSeen, roleName, scopeName, useSession }
 import { canonicalState, tierColour } from './lib/format';
 import { t } from './lib/i18n';
 import { go, href, useRoute } from './lib/router';
-import { AshokaChakra, Footer, Masthead } from './components/Chrome';
+import { AiOrb, Footer, IrisMark, Masthead, WaveSea } from './components/Chrome';
 import Copilot from './components/Copilot';
 import { StationModal } from './components/Official';
 import SearchBox from './components/SearchBox';
@@ -56,7 +56,7 @@ const ADVANCED = [
   { route: 'alerts', to: '/alerts', en: 'Official alerts', hi: 'आधिकारिक चेतावनियाँ', icon: '⛨', match: ['alerts'] },
   { route: 'states', to: '/states', en: 'State monitor', hi: 'राज्य निगरानी', icon: '▤', match: ['states'], central: true },
   { route: 'timemachine', to: '/time-machine', en: 'Time machine', hi: 'टाइम मशीन', icon: '⟲', match: ['timemachine'] },
-  { route: 'about', to: '/about', en: 'About JalDrishti', hi: 'जलदृष्टि परिचय', icon: 'ⓘ', match: ['about'] },
+  { route: 'about', to: '/about', en: 'About IRIS', hi: 'आइरिस परिचय', icon: 'ⓘ', match: ['about'] },
 ];
 
 function useStickyLang() {
@@ -102,7 +102,7 @@ function AlertToasts({ lang, toasts, onDismiss }) {
   return (
     <div className="pointer-events-none fixed right-3 top-[150px] z-[2500] flex w-[min(360px,calc(100vw-24px))] flex-col gap-2" role="status" aria-live="polite">
       {toasts.map((toast) => (
-        <div key={toast.key} className="pointer-events-auto rounded-xl border border-ink-700 border-l-[6px] bg-white p-3 shadow-2xl" style={{ borderLeftColor: tierColour(toast.level) }}>
+        <div key={toast.key} className="glass-card pointer-events-auto rounded-xl border-l-[6px] p-3 shadow-2xl" style={{ borderLeftColor: tierColour(toast.level) }}>
           <div className="flex items-start justify-between gap-2">
             <div className="text-[11px] font-extrabold uppercase tracking-wider text-ink-500">🔔 {L('New alert', 'नई चेतावनी')}</div>
             <button type="button" onClick={() => onDismiss(toast.key)} className="text-[14px] leading-none text-ink-500 hover:text-chakra-500" aria-label={L('Dismiss', 'बंद करें')}>
@@ -138,6 +138,7 @@ export default function App() {
   const [replayDate, setReplayDate] = useState(null);
   const [stationCode, setStationCode] = useState(null);
   const [copilotOpen, setCopilotOpen] = useState(false);
+  const [copilotPrompt, setCopilotPrompt] = useState(null);
   const [systemOpen, setSystemOpen] = useState(false);
   const [tourOpen, setTourOpen] = useState(false);
   const [advancedOpen, setAdvancedOpen] = useState(false);
@@ -292,6 +293,10 @@ export default function App() {
   );
 
   const openLocation = useCallback((id) => go(`/location/${id}`), []);
+  const askCopilot = useCallback((question) => {
+    setCopilotPrompt(question);
+    setCopilotOpen(true);
+  }, []);
 
   // Offer the tutorial once, on the first signed-in visit that has data to show.
   // The tutorial walks through the control-room tools, so it is for officials.
@@ -352,7 +357,8 @@ export default function App() {
     return (
       <div className="flex h-full flex-col">
         <Masthead {...chromeProps} meta={null} refreshing={status !== 'error'} onRefresh={() => loadCore()} />
-        <main className="grid flex-1 place-items-center p-6">
+        <main className={`relative grid flex-1 place-items-center overflow-hidden p-6 ${status === 'error' ? '' : 'iris-sky'}`}>
+          {status !== 'error' && <WaveSea height={160} />}
           {status === 'error' ? (
             <div className="panel max-w-md p-5 text-center">
               <h2 className={`mb-2 text-sm font-bold text-risk-orange ${hi}`}>{t(lang, 'errorTitle')}</h2>
@@ -367,10 +373,8 @@ export default function App() {
               </button>
             </div>
           ) : (
-            <div className="max-w-sm text-center">
-              <span className="mx-auto mb-4 block w-fit text-chakra-500">
-                <AshokaChakra size={52} spinning />
-              </span>
+            <div className="relative z-10 max-w-sm pb-24 text-center">
+              <IrisMark size={88} spinning className="mx-auto mb-4" />
               <p className={`text-[13px] text-ink-300 ${hi}`}>{status === 'warming' ? t(lang, 'warming') : t(lang, 'loading')}</p>
             </div>
           )}
@@ -397,7 +401,7 @@ export default function App() {
       break;
     case 'home':
       page = !admin ? (
-        <CitizenHome lang={lang} user={user} brief={brief} error={briefError} onRetry={loadBrief} onOpenCopilot={() => setCopilotOpen(true)} />
+        <CitizenHome lang={lang} user={user} brief={brief} error={briefError} onRetry={loadBrief} onOpenCopilot={() => setCopilotOpen(true)} onAsk={askCopilot} />
       ) : (
         <MyArea
           lang={lang}
@@ -487,7 +491,7 @@ export default function App() {
         <SearchBox lang={lang} locations={scoped.locations} onSelect={openLocation} />
       </Masthead>
 
-      <nav className="relative z-30 shrink-0 border-b border-ink-700 bg-white" aria-label="Main" data-tour="nav">
+      <nav className="glass-bar relative z-30 shrink-0 border-b border-white/70 shadow-[0_8px_24px_-20px_rgba(15,47,79,0.5)]" aria-label="Main" data-tour="nav">
         <div className="flex items-stretch gap-1 px-3">
           <a
             href={href('/')}
@@ -567,7 +571,7 @@ export default function App() {
                 <span aria-hidden="true" className="text-[10px]">▾</span>
               </button>
               {advancedOpen && (
-                <div className="absolute left-0 top-full z-40 mt-1 w-64 rounded-xl border border-ink-700 bg-white p-1.5 shadow-2xl">
+                <div className="glass-card absolute left-0 top-full z-40 mt-1 w-64 rounded-xl p-1.5 shadow-2xl">
                   {advanced.map((n) => (
                     <a
                       key={n.route}
@@ -607,7 +611,7 @@ export default function App() {
         </div>
       )}
 
-      <div className="shrink-0 border-b border-ink-700 bg-white px-3 py-2 md:hidden">
+      <div className="glass-bar shrink-0 border-b border-white/70 px-3 py-2 md:hidden">
         <SearchBox lang={lang} locations={scoped.locations} onSelect={openLocation} />
       </div>
 
@@ -617,7 +621,16 @@ export default function App() {
 
       <AlertToasts lang={lang} toasts={toasts} onDismiss={(key) => setToasts((prev) => prev.filter((x) => x.key !== key))} />
       <StationModal lang={lang} code={stationCode} onClose={() => setStationCode(null)} />
-      <Copilot lang={lang} open={copilotOpen} onClose={() => setCopilotOpen(false)} onSelectLocation={openLocation} locations={scoped.locations} />
+      {!copilotOpen && <AiOrb lang={lang} onClick={() => setCopilotOpen(true)} />}
+      <Copilot
+        lang={lang}
+        open={copilotOpen}
+        onClose={() => setCopilotOpen(false)}
+        onSelectLocation={openLocation}
+        locations={scoped.locations}
+        prompt={copilotPrompt}
+        onPromptUsed={() => setCopilotPrompt(null)}
+      />
       <SystemDialog lang={lang} system={system} open={systemOpen} onClose={() => setSystemOpen(false)} />
       <Tour lang={lang} open={tourOpen} onClose={closeTour} sampleLocation={worstId} sampleCity={cityId} mapPath={mapPath} role={user.role} />
     </div>

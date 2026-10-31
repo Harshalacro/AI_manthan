@@ -1,9 +1,9 @@
 {
-  "name": "jaldrishti-frontend",
+  "name": "iris-frontend",
   "private": true,
   "version": "1.0.0",
   "type": "module",
-  "description": "JalDrishti — hyperlocal flood prediction & response dashboard for India",
+  "description": "IRIS — Integrated Rainfall & Inundation Sentinel: hyperlocal flood risk for India",
   "scripts": {
     "dev": "vite",
     "build": "vite build",

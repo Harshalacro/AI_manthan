@@ -1,10 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
 import { api } from '../lib/api';
 import { tierColour } from '../lib/format';
-import { AshokaChakra } from './Chrome';
+import { IrisMark, Sparkle } from './Chrome';
 
 /**
- * JalDrishti Copilot — a chat drawer over the live risk snapshot.
+ * IRIS Copilot — a chat drawer over the live risk snapshot.
  *
  * The backend grounds every answer in the current data table and falls back to a
  * deterministic answerer with no LLM key, so the drawer is always usable. The
@@ -50,7 +50,7 @@ function Rich({ text, lang }) {
   );
 }
 
-export default function Copilot({ lang, open, onClose, onSelectLocation, locations = [] }) {
+export default function Copilot({ lang, open, onClose, onSelectLocation, locations = [], prompt = null, onPromptUsed }) {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
   const [busy, setBusy] = useState(false);
@@ -80,6 +80,15 @@ export default function Copilot({ lang, open, onClose, onSelectLocation, locatio
       document.removeEventListener('keydown', onKey, true);
     };
   }, [open]);
+
+  // A question handed in from elsewhere (e.g. a suggestion chip) is asked once.
+  useEffect(() => {
+    if (open && prompt) {
+      ask(prompt);
+      onPromptUsed?.();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, prompt]);
 
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
@@ -123,17 +132,22 @@ export default function Copilot({ lang, open, onClose, onSelectLocation, locatio
         }`}
         role="dialog"
         aria-modal="true"
-        aria-label="JalDrishti Copilot"
+        aria-label="IRIS Copilot"
         aria-hidden={!open}
       >
-        <div className="tricolour-rule h-[3px] w-full" />
-        <header className="flex items-center gap-3 bg-chakra-500 px-4 py-3 text-white">
-          <span className="grid h-9 w-9 place-items-center rounded-full bg-white text-chakra-500">
-            <AshokaChakra size={22} spinning={busy} />
+        <header className="relative overflow-hidden bg-gradient-to-br from-midnight-700 via-midnight-900 to-midnight-950 px-4 py-4 text-white">
+          <div className="pointer-events-none absolute -right-10 -top-16 h-40 w-40 rounded-full bg-aurora-violet/40 blur-3xl" aria-hidden="true" />
+          <div className="pointer-events-none absolute -bottom-20 left-10 h-40 w-40 rounded-full bg-aurora-cyan/30 blur-3xl" aria-hidden="true" />
+          <div className="relative flex items-center gap-3">
+          <span className="grid h-11 w-11 place-items-center rounded-2xl bg-white/95 shadow-[0_0_24px_rgba(34,211,238,0.45)]">
+            <IrisMark size={30} spinning={busy} />
           </span>
           <div className="min-w-0 flex-1">
-            <h2 className={`text-sm font-bold ${lang === 'hi' ? 'font-devanagari' : ''}`}>
-              {lang === 'hi' ? 'जलदृष्टि एआई सहायक' : 'JalDrishti Copilot'}
+            <h2 className={`flex items-center gap-2 text-[15px] font-bold ${lang === 'hi' ? 'font-devanagari' : ''}`}>
+              {lang === 'hi' ? 'आइरिस एआई सहायक' : 'IRIS AI'}
+              <span className="ai-chip px-2 py-0 text-[9px]">
+                <Sparkle size={9} /> {lang === 'hi' ? 'लाइव' : 'Live data'}
+              </span>
             </h2>
             <p className="truncate text-[10.5px] text-white/75">
               {provider
@@ -148,12 +162,17 @@ export default function Copilot({ lang, open, onClose, onSelectLocation, locatio
               <path d="M6 6l12 12M18 6L6 18" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" />
             </svg>
           </button>
+          </div>
         </header>
+        <div className="h-[2px] w-full animate-shimmer bg-[linear-gradient(90deg,#6D5DFC,#22D3EE,#2DD4BF,#6D5DFC)] bg-[length:200%_100%]" aria-hidden="true" />
 
-        <div className="min-h-0 flex-1 space-y-3 overflow-y-auto bg-ink-950 p-4 scrollbar-thin">
+        <div className="min-h-0 flex-1 space-y-3 overflow-y-auto bg-gradient-to-b from-[#F4F3FF] via-ink-950 to-ink-950 p-4 scrollbar-thin">
           {messages.length === 0 && (
             <div className="space-y-3">
-              <div className="rounded-xl border border-ink-700 bg-white p-3.5">
+              <div className="ai-frame rounded-2xl p-3.5">
+                <div className="mb-1.5 flex items-center gap-1.5 text-[11px] font-extrabold uppercase tracking-wider text-aurora-ink">
+                  <Sparkle size={12} /> {lang === 'hi' ? 'नमस्ते' : 'Hello'}
+                </div>
                 <p className={`text-[12.5px] leading-relaxed text-ink-200 ${lang === 'hi' ? 'font-devanagari' : ''}`}>
                   {lang === 'hi'
                     ? 'नमस्ते! मैं 41 निगरानी स्थानों के लाइव बाढ़ जोखिम आँकड़ों से उत्तर देता हूँ। हिंदी या अंग्रेज़ी में पूछें।'
@@ -166,8 +185,9 @@ export default function Copilot({ lang, open, onClose, onSelectLocation, locatio
                     key={s}
                     type="button"
                     onClick={() => ask(s)}
-                    className={`rounded-lg border border-saffron-500/30 bg-saffron-50 px-3 py-2 text-left text-[11.5px] font-medium text-saffron-200 transition hover:border-saffron-500 hover:bg-saffron-100 ${lang === 'hi' ? 'font-devanagari' : ''}`}
+                    className={`group flex items-center gap-2 rounded-xl border border-aurora-violet/20 bg-white px-3 py-2 text-left text-[12px] font-medium text-ink-200 shadow-sm transition hover:-translate-y-px hover:border-aurora-violet/50 hover:shadow-md ${lang === 'hi' ? 'font-devanagari' : ''}`}
                   >
+                    <Sparkle size={12} className="shrink-0 text-aurora-violet transition group-hover:rotate-45" />
                     {s}
                   </button>
                 ))}
@@ -178,13 +198,16 @@ export default function Copilot({ lang, open, onClose, onSelectLocation, locatio
           {messages.map((m, i) =>
             m.role === 'user' ? (
               <div key={i} className="flex justify-end">
-                <div className={`max-w-[85%] rounded-2xl rounded-br-sm bg-chakra-500 px-3.5 py-2 text-[12px] text-white ${/[ऀ-ॿ]/.test(m.content) ? 'font-devanagari' : ''}`}>
+                <div className={`max-w-[85%] rounded-2xl rounded-br-sm bg-gradient-to-br from-chakra-500 to-saffron-700 px-3.5 py-2 text-[12.5px] text-white shadow-md ${/[ऀ-ॿ]/.test(m.content) ? 'font-devanagari' : ''}`}>
                   {m.content}
                 </div>
               </div>
             ) : (
-              <div key={i} className="flex justify-start">
-                <div className="max-w-[92%] rounded-2xl rounded-bl-sm border border-ink-700 bg-white px-3.5 py-2.5 text-ink-100 shadow-sm">
+              <div key={i} className="flex animate-fade-up justify-start gap-2">
+                <span className="mt-1 grid h-7 w-7 shrink-0 place-items-center rounded-full bg-gradient-to-br from-aurora-violet to-aurora-cyan text-white shadow" aria-hidden="true">
+                  <Sparkle size={13} />
+                </span>
+                <div className="max-w-[88%] rounded-2xl rounded-tl-sm border border-aurora-violet/15 bg-white px-3.5 py-2.5 text-ink-100 shadow-sm">
                   <Rich text={m.content} lang={/[ऀ-ॿ]/.test(m.content) ? 'hi' : 'en'} />
                   {m.provider && (
                     <div className="mt-2 flex items-center gap-1.5 border-t border-ink-800 pt-1.5 text-[9.5px] uppercase tracking-wider text-ink-500">
@@ -199,13 +222,13 @@ export default function Copilot({ lang, open, onClose, onSelectLocation, locatio
           )}
 
           {busy && (
-            <div className="flex items-center gap-2 text-[11px] text-ink-500">
-              <span className="flex gap-1">
-                {[0, 1, 2].map((d) => (
-                  <span key={d} className="h-1.5 w-1.5 animate-bounce rounded-full bg-saffron-500" style={{ animationDelay: `${d * 120}ms` }} />
-                ))}
+            <div className="flex items-center gap-2">
+              <span className="grid h-7 w-7 shrink-0 animate-pulse place-items-center rounded-full bg-gradient-to-br from-aurora-violet to-aurora-cyan text-white" aria-hidden="true">
+                <Sparkle size={13} />
               </span>
-              {lang === 'hi' ? 'आँकड़े देख रहा हूँ…' : 'Reading the live data…'}
+              <span className="text-aurora animate-shimmer bg-[length:200%_100%] text-[12px] font-semibold">
+                {lang === 'hi' ? 'लाइव आँकड़े पढ़ रहा हूँ…' : 'Reading the live data…'}
+              </span>
             </div>
           )}
 
@@ -242,12 +265,12 @@ export default function Copilot({ lang, open, onClose, onSelectLocation, locatio
             value={input}
             onChange={(e) => setInput(e.target.value)}
             placeholder={lang === 'hi' ? 'प्रश्न पूछें…' : 'Ask about any city, state or river…'}
-            className={`min-w-0 flex-1 rounded-lg border border-ink-700 bg-ink-850 px-3 py-2 text-[12px] text-ink-100 placeholder:text-ink-500 focus:border-saffron-500 ${lang === 'hi' ? 'font-devanagari' : ''}`}
+            className={`min-w-0 flex-1 rounded-full border border-ink-700 bg-ink-850 px-4 py-2.5 text-[12.5px] text-ink-100 placeholder:text-ink-500 focus:border-aurora-violet focus:ring-2 focus:ring-aurora-violet/15 ${lang === 'hi' ? 'font-devanagari' : ''}`}
             maxLength={2000}
           />
-          <button type="submit" className="btn btn-primary" disabled={busy || !input.trim()} aria-label="Send">
+          <button type="submit" className="btn-ai h-10 w-10 px-0 disabled:opacity-50" disabled={busy || !input.trim()} aria-label="Send">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
-              <path d="M4 12l16-8-6 16-2.5-6.5L4 12z" fill="currentColor" />
+              <path d="M4 12l16-8-6 16-2.5-6.5L4 12z" fill="currentColor" className="relative" />
             </svg>
           </button>
         </form>

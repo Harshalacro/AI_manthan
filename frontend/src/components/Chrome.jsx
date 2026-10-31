@@ -1,57 +1,130 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useId, useMemo, useRef, useState } from 'react';
 import { relativeAge, stateName, tierColour, TIER_LABELS, TIER_ORDER } from '../lib/format';
 import { pickPlain, t } from '../lib/i18n';
 
 /**
- * Application chrome: the tricolour rule, masthead, alert ticker and footer.
+ * Application chrome: the IRIS mark, water rule, masthead, alert ticker and footer.
  *
- * On the government aesthetic, and its limits: the visual language here quotes
- * Indian public-service dashboards deliberately — the tricolour rule, the Ashoka
- * Chakra, the Devanagari/Latin bilingual pairing, IMD's four-colour alert scale.
- * What it does *not* do is borrow anyone's identity. There is no State Emblem
- * (its use is restricted by the State Emblem of India Act, 2005), no ministry
- * name, no departmental logo, and a "Prototype" badge sits in the masthead with a
- * standing disclaimer in the footer. The look should say "built for Indian
- * emergency response", never "issued by the Government of India".
+ * IRIS is built for people, not departments: the look is light on water - white
+ * surfaces, a sky-blue accent, ocean-navy type - so the only warm colours on
+ * screen are IMD's warning tiers. A "Prototype" badge sits in the masthead and a
+ * standing disclaimer in the footer; official warnings still come from IMD / CWC.
  */
 
-/** The 24-spoke Ashoka Chakra. Spins while data is in flight. */
-export function AshokaChakra({ size = 26, spinning = false, className = '' }) {
-  const spokes = useMemo(
-    () => Array.from({ length: 24 }, (_, i) => (i * 360) / 24),
-    [],
-  );
+/** The IRIS emblem. While data is in flight, ripples spread out from it. */
+export function IrisMark({ size = 26, spinning = false, className = '' }) {
   return (
-    <svg
-      viewBox="0 0 100 100"
-      width={size}
-      height={size}
-      className={`${spinning ? 'animate-chakra-spin' : ''} ${className}`}
-      role="img"
-      aria-label="Ashoka Chakra"
-    >
-      <circle cx="50" cy="50" r="46" fill="none" stroke="currentColor" strokeWidth="4" />
-      <circle cx="50" cy="50" r="7" fill="currentColor" />
-      {spokes.map((deg) => (
-        <line
-          key={deg}
-          x1="50"
-          y1="50"
-          x2="50"
-          y2="6"
-          stroke="currentColor"
-          strokeWidth="2.4"
-          strokeLinecap="round"
-          transform={`rotate(${deg} 50 50)`}
-        />
-      ))}
-    </svg>
+    <span className={`relative inline-grid shrink-0 place-items-center ${className}`} style={{ width: size, height: size }}>
+      {spinning && (
+        <>
+          <span className="absolute inset-0 animate-ripple rounded-full border-2 border-saffron-400" aria-hidden="true" />
+          <span className="absolute inset-0 animate-ripple rounded-full border-2 border-saffron-400 [animation-delay:1.3s]" aria-hidden="true" />
+        </>
+      )}
+      <img src="/iris-mark.png" alt="IRIS" width={size} height={size} className="relative h-full w-full object-contain" draggable="false" />
+    </span>
   );
 }
 
-export function TricolourRule() {
-  return <div className="tricolour-rule h-[3px] w-full shrink-0" aria-hidden="true" />;
+/** The thin flowing sky-to-teal line under the masthead. */
+export function WaveRule({ className = '' }) {
+  return <div className={`wave-rule h-[3px] w-full shrink-0 ${className}`} aria-hidden="true" />;
 }
+
+// One wave period per 1440 units, drawn twice across a 2880-wide SVG so the
+// layer can slide by half its width and loop seamlessly.
+function wavePath(y, amp) {
+  let d = `M0 ${y}`;
+  for (let i = 0; i < 4; i += 1) {
+    const x = i * 720;
+    const s = i % 2 ? amp : -amp;
+    d += ` C${x + 240} ${y + s} ${x + 480} ${y + s} ${x + 720} ${y}`;
+  }
+  return `${d} L2880 200 L0 200 Z`;
+}
+
+// Fills per tone, back to front: light (sign-in sea), dark (faint texture on a
+// midnight panel) and flood (high water rising into a panel).
+const SEA = {
+  light: ['#8FD0EE', '#4FB0DE', '#1A8CC4', '#0F5E8A'],
+  dark: ['rgba(255,255,255,0.03)', 'rgba(125,211,252,0.05)', 'rgba(125,211,252,0.09)', 'rgba(125,211,252,0.02)'],
+  flood: ['rgba(56,160,215,0.22)', 'rgba(40,140,200,0.32)', 'rgba(70,175,225,0.55)', 'rgba(20,90,140,0.75)'],
+};
+
+/**
+ * Drifting layered sea along the bottom of its (relative) parent, in one of the
+ * tones above, or in explicit `fills` (four colours, back to front).
+ */
+export function WaveSea({ height = 220, className = '', tone = 'light', fills = null }) {
+  const id = useId().replace(/:/g, '');
+  const fill = fills ?? SEA[tone] ?? SEA.light;
+  return (
+    <div className={`iris-sea ${className}`} style={{ height }} aria-hidden="true">
+      <svg className="l1" viewBox="0 0 2880 200" preserveAspectRatio="none">
+        <path d={wavePath(70, 34)} fill={fill[0]} />
+      </svg>
+      <svg className="l2" viewBox="0 0 2880 200" preserveAspectRatio="none">
+        <path d={wavePath(105, 26)} fill={fill[1]} />
+      </svg>
+      <svg className="l3" viewBox="0 0 2880 200" preserveAspectRatio="none">
+        <defs>
+          <linearGradient id={`${id}-front`} x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stopColor={fill[2]} />
+            <stop offset="1" stopColor={fill[3]} />
+          </linearGradient>
+        </defs>
+        <path d={wavePath(140, 18)} fill={`url(#${id}-front)`} />
+      </svg>
+    </div>
+  );
+}
+
+/** Ring of places by tier, total in the middle. */
+export function TierRing({ counts, size = 116, label }) {
+  const order = ['red', 'orange', 'yellow', 'green'];
+  const total = order.reduce((n, t) => n + (counts[t] || 0), 0) || 1;
+  const r = 44;
+  const c = 2 * Math.PI * r;
+  const gap = order.filter((t) => counts[t]).length > 1 ? 3 : 0;
+  let offset = 0;
+  return (
+    <div className="relative shrink-0" style={{ width: size, height: size }}>
+      <svg viewBox="0 0 100 100" className="-rotate-90" width={size} height={size} aria-hidden="true">
+        <circle cx="50" cy="50" r={r} fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth="7" />
+        {order.map((t) => {
+          const n = counts[t] || 0;
+          if (!n) return null;
+          const len = (n / total) * c;
+          const seg = (
+            <circle
+              key={t}
+              cx="50"
+              cy="50"
+              r={r}
+              fill="none"
+              stroke={TIER_GLOW[t]}
+              strokeWidth="7"
+              strokeLinecap="round"
+              strokeDasharray={`${Math.max(0.5, len - gap)} ${c}`}
+              strokeDashoffset={-offset}
+            />
+          );
+          offset += len;
+          return seg;
+        })}
+      </svg>
+      <div className="absolute inset-0 grid place-items-center text-center">
+        <div>
+          <div className="text-[30px] font-extrabold leading-none text-white">{total}</div>
+          <div className="mt-1 text-[10px] font-bold uppercase tracking-[0.14em] text-white/55">{label}</div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// IMD tiers brightened to stay legible on midnight panels.
+export const TIER_GLOW = { red: '#FF6B76', orange: '#FFA25C', yellow: '#FFD84D', green: '#4ADE80' };
 
 function LiveDot({ refreshing }) {
   return (
@@ -145,7 +218,7 @@ function TextSizeControl({ lang }) {
           aria-pressed={zoom === value}
           onClick={() => setZoom(value)}
           className={`min-w-[22px] rounded px-1 py-0.5 text-[10.5px] font-bold transition ${
-            zoom === value ? 'bg-white text-chakra-500' : 'text-white/80 hover:bg-white/15 hover:text-white'
+            zoom === value ? 'bg-white text-chakra-500 shadow-sm' : 'text-ink-400 hover:bg-white/70 hover:text-chakra-500'
           }`}
         >
           {label}
@@ -187,10 +260,10 @@ export function Masthead({
         {lang === 'hi' ? 'मुख्य सामग्री पर जाएँ' : 'Skip to main content'}
       </a>
 
-      {/* utility strip — navy, the portal convention */}
-      <div className="bg-chakra-500 text-white">
+      {/* utility strip — a pale sky band */}
+      <div className="border-b border-white/60 bg-gradient-to-r from-saffron-50/70 via-white/50 to-saffron-50/70 backdrop-blur-xl">
         <div className="flex items-center gap-3 px-4 py-1 lg:px-5">
-          <span className={`truncate text-[10.5px] font-medium text-white/90 ${lang === 'hi' ? 'font-devanagari' : ''}`}>
+          <span className={`truncate text-[10.5px] font-medium text-ink-400 ${lang === 'hi' ? 'font-devanagari' : ''}`}>
             {lang === 'hi'
               ? 'बाढ़ पूर्वानुमान अनुसंधान प्रोटोटाइप · आधिकारिक चेतावनी हेतु IMD / CWC देखें'
               : 'Flood forecasting research prototype · For official warnings see IMD / CWC'}
@@ -199,28 +272,21 @@ export function Masthead({
             <span className="hidden sm:block">
               <TextSizeControl lang={lang} />
             </span>
-            <span className="hidden h-3.5 w-px bg-white/25 sm:block" aria-hidden="true" />
-            <LangToggle lang={lang} onChange={onLangChange} tone="dark" />
+            <span className="hidden h-3.5 w-px bg-ink-700 sm:block" aria-hidden="true" />
+            <LangToggle lang={lang} onChange={onLangChange} />
           </div>
         </div>
       </div>
 
-      <TricolourRule />
-
       {/* identity row — white */}
-      <div className="border-b border-ink-700 bg-white">
+      <div className="glass-bar">
         <div className="flex flex-wrap items-center gap-x-5 gap-y-2 px-4 py-2.5 lg:px-5">
           <div className="flex min-w-0 items-center gap-3">
-            <div className="grid h-12 w-12 shrink-0 place-items-center rounded-full border-2 border-saffron-500 bg-white text-chakra-500 shadow-sm">
-              <AshokaChakra size={30} spinning={refreshing} />
-            </div>
+            <IrisMark size={46} spinning={refreshing} />
             <div className="min-w-0 leading-tight">
               <div className="flex items-baseline gap-2">
-                <span className="font-devanagari truncate text-[20px] font-bold text-saffron-500">
-                  जलदृष्टि
-                </span>
-                <h1 className="truncate text-[20px] font-extrabold tracking-tight text-chakra-500">
-                  JalDrishti
+                <h1 className="font-display text-[28px] font-semibold leading-none tracking-[0.18em] text-chakra-500">
+                  IRIS
                 </h1>
                 <span className="chip border-saffron-500/50 bg-saffron-50 px-2 py-0.5 text-[10px] text-saffron-300">
                   {t(lang, 'prototype')}
@@ -282,20 +348,15 @@ export function Masthead({
 
             <button
               type="button"
-              className="btn border-chakra-500 bg-chakra-500 text-white hover:bg-[#123A78] hover:text-white"
+              className="btn-ai"
               onClick={onOpenCopilot}
               data-tour="copilot"
-              title={lang === 'hi' ? 'एआई सहायक से पूछें' : 'Ask the AI Copilot'}
-              aria-label={lang === 'hi' ? 'एआई सहायक' : 'AI Copilot'}
+              title={lang === 'hi' ? 'आइरिस एआई से पूछें' : 'Ask IRIS AI'}
+              aria-label={lang === 'hi' ? 'आइरिस एआई' : 'Ask IRIS AI'}
             >
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" aria-hidden="true" className="text-white">
-                <path
-                  d="M12 3l1.9 4.6L18.5 9.5l-4.6 1.9L12 16l-1.9-4.6L5.5 9.5l4.6-1.9L12 3zM19 15l.9 2.1L22 18l-2.1.9L19 21l-.9-2.1L16 18l2.1-.9L19 15z"
-                  fill="currentColor"
-                />
-              </svg>
-              <span className={`hidden sm:inline ${lang === 'hi' ? 'font-devanagari' : ''}`}>
-                {lang === 'hi' ? 'एआई सहायक' : 'AI Copilot'}
+              <Sparkle size={15} className="relative text-aurora-cyan" />
+              <span className={`relative hidden sm:inline ${lang === 'hi' ? 'font-devanagari' : ''}`}>
+                {lang === 'hi' ? 'आइरिस एआई' : 'Ask IRIS AI'}
               </span>
             </button>
 
@@ -346,6 +407,7 @@ export function Masthead({
           </div>
         </div>
       </div>
+      <WaveRule />
     </header>
   );
 }
@@ -442,7 +504,7 @@ export function Footer({ lang, system, meta }) {
     : '';
 
   return (
-    <footer data-tour="footer" className="relative z-10 shrink-0 border-t-4 border-saffron-500 bg-chakra-500 px-4 py-2 text-white lg:px-5">
+    <footer data-tour="footer" className="relative z-10 shrink-0 bg-gradient-to-r from-chakra-500 via-chakra-400 to-[#0E4F6E] px-4 py-2 text-white lg:px-5">
       <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5">
         {/* basis-full below lg: sharing a row with the shrink-0 run stats
             squeezed this paragraph to one word per line on a phone */}
@@ -475,4 +537,176 @@ export function Footer({ lang, system, meta }) {
       </div>
     </footer>
   );
+}
+
+/** Four-point sparkle: the mark for anything the AI says or does. */
+export function Sparkle({ size = 14, className = '' }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" aria-hidden="true" className={className}>
+      <path
+        d="M12 2.5l2.1 5.6 5.6 2.1-5.6 2.1L12 17.9l-2.1-5.6-5.6-2.1 5.6-2.1L12 2.5zM19 15.5l.9 2.3 2.3.9-2.3.9-.9 2.3-.9-2.3-2.3-.9 2.3-.9.9-2.3z"
+        fill="currentColor"
+      />
+    </svg>
+  );
+}
+
+/** Floating "Ask IRIS AI" orb, bottom-right on every signed-in page. */
+export function AiOrb({ lang, onClick }) {
+  const label = lang === 'hi' ? 'आइरिस एआई से पूछें' : 'Ask IRIS AI';
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-label={label}
+      className="group fixed bottom-14 right-4 z-[1500] flex items-center gap-2 sm:bottom-16 sm:right-6"
+    >
+      <span className={`pointer-events-none hidden translate-x-2 rounded-full bg-midnight-900/90 px-3 py-1.5 text-[12px] font-bold text-white opacity-0 shadow-lg backdrop-blur transition group-hover:translate-x-0 group-hover:opacity-100 sm:block ${lang === 'hi' ? 'font-devanagari' : ''}`}>
+        {label}
+      </span>
+      <span className="relative grid h-14 w-14 place-items-center">
+        <span className="absolute inset-0 animate-ripple rounded-full bg-aurora-violet/30" aria-hidden="true" />
+        <span className="absolute inset-0 animate-orb rounded-full bg-[conic-gradient(from_0deg,#6D5DFC,#22D3EE,#2DD4BF,#1A8CC4,#6D5DFC)] blur-[1px]" aria-hidden="true" />
+        <span className="absolute inset-[3px] rounded-full bg-gradient-to-br from-midnight-700 via-midnight-900 to-midnight-950" aria-hidden="true" />
+        <span className="absolute inset-[3px] rounded-full bg-[radial-gradient(circle_at_30%_25%,rgba(34,211,238,0.45),transparent_55%)]" aria-hidden="true" />
+        <Sparkle size={22} className="relative text-white transition group-hover:scale-110 group-hover:rotate-12" />
+      </span>
+    </button>
+  );
+}
+
+/**
+ * Round water-level window: the water sits at `level` (0-100) and is tinted
+ * with the risk colour, with two slowly turning surfaces for motion.
+ */
+export function WaterTank({ level, colour, size = 120, children }) {
+  const style = { width: size, height: size, '--level': Math.max(6, Math.min(94, level)), '--water': `linear-gradient(180deg, ${colour}, ${colour}CC)` };
+  return (
+    <div className="iris-tank shrink-0" style={style}>
+      <div className="iris-tank-water back" />
+      <div className="iris-tank-water" />
+      <div className="relative z-10 grid h-full w-full place-items-center text-center text-white">{children}</div>
+    </div>
+  );
+}
+
+/**
+ * Canvas rain: individual drops in three depth layers, each a streak fading in
+ * from its tail, slanted by a slowly gusting wind. Drops landing near the sea
+ * leave a small spreading ripple. Off when the user prefers reduced motion.
+ */
+export function RainCanvas({ density = 1, className = '', tone = 'light' }) {
+  const ref = useRef(null);
+
+  useEffect(() => {
+    const canvas = ref.current;
+    if (!canvas || window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return undefined;
+    const ctx = canvas.getContext('2d');
+    // Streak colour: blue-grey on a light sky, pale silver on a dark one.
+    const streak = tone === 'dark' ? '190,215,240' : '70,125,170';
+    // Far, middle, near: smaller, slower and fainter the further away.
+    const LAYERS = [
+      { share: 0.5, len: [8, 14], speed: [520, 680], width: 0.8, alpha: [0.12, 0.22] },
+      { share: 0.35, len: [14, 22], speed: [720, 900], width: 1.1, alpha: [0.22, 0.34] },
+      { share: 0.15, len: [24, 36], speed: [980, 1200], width: 1.5, alpha: [0.3, 0.46] },
+    ];
+    const rand = (a, b) => a + Math.random() * (b - a);
+    let w = 0;
+    let h = 0;
+    let drops = [];
+    const splashes = [];
+    let raf = 0;
+    let last = performance.now();
+    let t = 0;
+
+    function spawn(layer, anywhere) {
+      return {
+        layer,
+        x: rand(-0.1 * w, 1.1 * w),
+        y: anywhere ? rand(-h, h) : rand(-120, -20),
+        len: rand(...layer.len),
+        speed: rand(...layer.speed),
+        alpha: rand(...layer.alpha),
+        // Near drops reach further down, so they land on the closer water.
+        floor: h * rand(layer === LAYERS[2] ? 0.86 : 0.74, layer === LAYERS[2] ? 1 : 0.9),
+      };
+    }
+
+    function resize() {
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      const rect = canvas.getBoundingClientRect();
+      w = rect.width;
+      h = rect.height;
+      canvas.width = Math.round(w * dpr);
+      canvas.height = Math.round(h * dpr);
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      const count = Math.round(Math.min(260, (w * h) / 5200) * density);
+      drops = [];
+      LAYERS.forEach((layer) => {
+        for (let i = 0; i < Math.round(count * layer.share); i += 1) drops.push(spawn(layer, true));
+      });
+    }
+
+    function frame(now) {
+      const dt = Math.min(0.05, (now - last) / 1000);
+      last = now;
+      t += dt;
+      // Wind gusts: a slow wander between about 6 and 16 degrees of slant.
+      const wind = 0.11 + 0.07 * Math.sin(t * 0.35) + 0.03 * Math.sin(t * 1.3);
+      ctx.clearRect(0, 0, w, h);
+      ctx.lineCap = 'round';
+
+      for (const d of drops) {
+        const vx = d.speed * wind;
+        d.x += vx * dt;
+        d.y += d.speed * dt;
+        const tailX = d.x - (vx / d.speed) * d.len;
+        const tailY = d.y - d.len;
+        const g = ctx.createLinearGradient(tailX, tailY, d.x, d.y);
+        g.addColorStop(0, `rgba(${streak},0)`);
+        g.addColorStop(0.7, `rgba(${streak},${d.alpha * 0.8})`);
+        g.addColorStop(1, `rgba(225,242,252,${Math.min(1, d.alpha * 1.6)})`);
+        ctx.strokeStyle = g;
+        ctx.lineWidth = d.layer.width;
+        ctx.beginPath();
+        ctx.moveTo(tailX, tailY);
+        ctx.lineTo(d.x, d.y);
+        ctx.stroke();
+
+        if (d.y >= d.floor) {
+          if (d.layer !== LAYERS[0] && splashes.length < 90) splashes.push({ x: d.x, y: d.y, r: 0.5, life: 1, big: d.layer === LAYERS[2] });
+          Object.assign(d, spawn(d.layer, false));
+        } else if (d.x > w * 1.15) {
+          d.x -= w * 1.25;
+        }
+      }
+
+      for (let i = splashes.length - 1; i >= 0; i -= 1) {
+        const s = splashes[i];
+        s.life -= dt * 2.4;
+        s.r += dt * (s.big ? 26 : 16);
+        if (s.life <= 0) {
+          splashes.splice(i, 1);
+          continue;
+        }
+        ctx.strokeStyle = `rgba(240,250,255,${0.55 * s.life})`;
+        ctx.lineWidth = 0.9;
+        ctx.beginPath();
+        ctx.ellipse(s.x, s.y, s.r, s.r * 0.32, 0, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+      raf = requestAnimationFrame(frame);
+    }
+
+    resize();
+    const ro = new ResizeObserver(resize);
+    ro.observe(canvas);
+    raf = requestAnimationFrame(frame);
+    return () => {
+      cancelAnimationFrame(raf);
+      ro.disconnect();
+    };
+  }, [density, tone]);
+
+  return <canvas ref={ref} className={`pointer-events-none absolute inset-0 h-full w-full ${className}`} aria-hidden="true" />;
 }

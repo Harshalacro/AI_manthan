@@ -47,7 +47,7 @@ function Stat({ label, ours, base, better, note }) {
 }
 
 const TIERS = ['red', 'orange', 'yellow', 'green'];
-const ON_TIME = '#0B2A5B';
+const ON_TIME = '#0F2F4F';
 const LATE = '#8A97AB';
 
 /** Points along a gentle arc from a to b, so routes into one place fan out. */
@@ -160,7 +160,7 @@ function PlanMap({ plan, lang, tname, filter, onSelectPlace }) {
     depotMarks.forEach((o) => {
       const ndrf = o.depot_kind === 'ndrf';
       const size = focus ? 14 : 9;
-      const html = `<div style="width:${size}px;height:${size}px;border-radius:3px;background:${ndrf ? '#0B2A5B' : '#fff'};border:2px solid #0B2A5B;box-shadow:0 1px 2px rgba(0,0,0,.3)"></div>`;
+      const html = `<div style="width:${size}px;height:${size}px;border-radius:3px;background:${ndrf ? '#0F2F4F' : '#fff'};border:2px solid #0F2F4F;box-shadow:0 1px 2px rgba(0,0,0,.3)"></div>`;
       const m = L.marker([o.depot_lat, o.depot_lon], {
         icon: L.divIcon({ html, className: '', iconSize: [size, size], iconAnchor: [size / 2, size / 2] }),
         zIndexOffset: 400,
@@ -189,7 +189,7 @@ function PlanMap({ plan, lang, tname, filter, onSelectPlace }) {
         const dim = focus && !isFocus;
         L.circleMarker([p.lat, p.lon], {
           radius: isFocus ? r + 3 : r,
-          color: isFocus ? '#0B2A5B' : '#fff',
+          color: isFocus ? '#0F2F4F' : '#fff',
           weight: isFocus ? 3 : 1.2,
           fillColor: tierColour(p.tier),
           fillOpacity: dim ? 0.25 : 0.9,
@@ -475,7 +475,7 @@ export default function PlanPage({ lang }) {
               type="button"
               disabled={!selected.size || !!busy}
               onClick={dispatch}
-              className="btn border-chakra-500 bg-chakra-500 text-white hover:bg-[#123A78] hover:text-white disabled:opacity-50"
+              className="btn border-chakra-500 bg-chakra-500 text-white hover:bg-[#174A70] hover:text-white disabled:opacity-50"
             >
               {busy === 'dispatch' ? L_('Dispatching…', 'रवाना हो रहा…') : L_(`Dispatch selected (${selUnits} units)`, `चयनित रवाना करें (${selUnits})`)}
             </button>

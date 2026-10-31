@@ -1,6 +1,6 @@
-# JalDrishti · जलदृष्टि
+# IRIS · Integrated Rainfall & Inundation Sentinel
 
-**Hyperlocal Rainfall Early Warning & Inundation Prediction — a working prototype for India**
+**Hyperlocal flood risk for where you live — rainfall early warning & inundation prediction for India (formerly JalDrishti)**
 
 **Live demo: [hack-eosin-two.vercel.app](https://hack-eosin-two.vercel.app)**. Use
 **Quick demo** on the sign-in page to enter as an official (central, state, district) or
@@ -214,7 +214,7 @@ rescue teams and boats, and gets 1,103 units on site before the peak against 815
 The back-test `python backend/scripts/backtest_planning.py` replays 67 real flood
 dates with the same national stock:
 
-| On 70 real flood place-days | Severity-only | JalDrishti |
+| On 70 real flood place-days | Severity-only | IRIS |
 |---|---|---|
 | Flooded places reached in time | 59 | **64** |
 | Flooded places reached at all | 63 | **66** |
@@ -612,7 +612,7 @@ Environment variables, all optional:
   substitute for an official disaster database.
 - **No rate limiting** on the API, including citizen sign-up. It is a prototype.
 - **Open-Meteo's free daily quota** (per IP) can run out after many restarts or
-  climatology builds. When it does, JalDrishti pauses all Open-Meteo calls until the
+  climatology builds. When it does, IRIS pauses all Open-Meteo calls until the
   quota resets (00:05 UTC) instead of retrying. It keeps re-scoring on the last good
   weather, or on the last run's model scores, with live CWC gauges and SACHET alerts
   on top. The masthead shows "Gauges live · weather paused", with the weather's age

@@ -496,7 +496,7 @@ async def send_deployment(orders: list[dict], by: dict) -> int:
                 "place_id": place_id,
                 "title": f"Deployment: {units} units on the way to {loc['name']}",
                 "title_hi": f"तैनाती: {units} इकाइयाँ {loc.get('name_hi') or loc['name']} की ओर",
-                "detail": "Dispatched by " + by["username"] + " from the JalDrishti response plan. " + "; ".join(lines) + ".",
+                "detail": "Dispatched by " + by["username"] + " from the IRIS response plan. " + "; ".join(lines) + ".",
                 "what_to_do": "Prepare staging areas and local guides; confirm arrival on the response plan.",
                 "message": f"Deployment to {loc['name']}: " + "; ".join(lines) + ". Reply ACK to confirm.",
                 "message_hi": f"{loc.get('name_hi') or loc['name']} हेतु तैनाती: " + "; ".join(lines_hi) + "।",

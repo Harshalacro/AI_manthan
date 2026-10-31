@@ -241,7 +241,7 @@ export function StationModal({ lang, code, onClose }) {
   return (
     <div className="fixed inset-0 z-50 grid place-items-center bg-navy-800/45 p-4" onClick={(e) => e.target === e.currentTarget && onClose()}>
       <div className="panel flex max-h-[90vh] w-full max-w-4xl animate-fade-up flex-col overflow-hidden" role="dialog" aria-modal="true">
-        <div className="tricolour-rule h-[3px]" />
+        <div className="wave-rule h-[3px]" />
         <header className="flex items-start gap-3 border-b border-ink-700 px-4 py-3">
           <div className="min-w-0 flex-1">
             <div className="flex flex-wrap items-center gap-2">
@@ -317,12 +317,12 @@ export function StationModal({ lang, code, onClose }) {
                       <ReferenceLine y={st.danger_level} stroke="#C1121F" strokeDasharray="5 4" label={{ value: `danger ${st.danger_level}`, fontSize: 10, fill: '#C1121F', position: 'insideTopLeft' }} />
                     )}
                     {st?.hfl != null && (
-                      <ReferenceLine y={st.hfl} stroke="#0B2A5B" strokeDasharray="2 4" label={{ value: `HFL ${st.hfl}`, fontSize: 10, fill: '#0B2A5B', position: 'insideTopRight' }} />
+                      <ReferenceLine y={st.hfl} stroke="#0F2F4F" strokeDasharray="2 4" label={{ value: `HFL ${st.hfl}`, fontSize: 10, fill: '#0F2F4F', position: 'insideTopRight' }} />
                     )}
                     <Area dataKey="bandBase" stackId="b" stroke="none" fill="transparent" isAnimationActive={false} name="p10" />
-                    <Area dataKey="bandSpan" stackId="b" stroke="none" fill="#F26A1B" fillOpacity={0.2} isAnimationActive={false} name="p10–p90 band" />
-                    <Line dataKey="observed" stroke="#0B2A5B" strokeWidth={2.2} dot={false} name={lang === 'hi' ? 'प्रेक्षित' : 'observed (CWC)'} isAnimationActive={false} />
-                    <Line dataKey="p50" stroke="#F26A1B" strokeWidth={2.2} strokeDasharray="6 3" dot={false} name="AI forecast p50" isAnimationActive={false} />
+                    <Area dataKey="bandSpan" stackId="b" stroke="none" fill="#1A8CC4" fillOpacity={0.2} isAnimationActive={false} name="p10–p90 band" />
+                    <Line dataKey="observed" stroke="#0F2F4F" strokeWidth={2.2} dot={false} name={lang === 'hi' ? 'प्रेक्षित' : 'observed (CWC)'} isAnimationActive={false} />
+                    <Line dataKey="p50" stroke="#1A8CC4" strokeWidth={2.2} strokeDasharray="6 3" dot={false} name="AI forecast p50" isAnimationActive={false} />
                     <Line dataKey="cwc" stroke="#0B8A3D" strokeWidth={2} dot={{ r: 3 }} name="CWC official forecast" isAnimationActive={false} connectNulls />
                   </ComposedChart>
                 </ResponsiveContainer>

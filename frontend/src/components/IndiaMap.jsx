@@ -256,7 +256,7 @@ export default function IndiaMap({
         fillOpacity: dimmed ? 0.16 : isSelected ? 0.62 : 0.5,
         // White keylines between states, navy for the selected one - the
         // conventional choropleth treatment on a light basemap.
-        color: isSelected ? '#0B2A5B' : '#FFFFFF',
+        color: isSelected ? '#0F2F4F' : '#FFFFFF',
         weight: isSelected ? 2.4 : 1.1,
         dashArray: null,
       };
@@ -274,7 +274,7 @@ export default function IndiaMap({
         lyr.on({
           mouseover: () => {
             const row = handlers.current.stateScores.get(name);
-            lyr.setStyle({ weight: 2.2, color: '#0B2A5B', fillOpacity: row ? 0.66 : 0.6 });
+            lyr.setStyle({ weight: 2.2, color: '#0F2F4F', fillOpacity: row ? 0.66 : 0.6 });
             lyr.bringToFront();
             const lg = handlers.current.lang;
             lyr
@@ -355,7 +355,7 @@ export default function IndiaMap({
       style: {
         fillColor: '#FFFFFF',
         fillOpacity: 0.05,
-        color: '#0B2A5B',
+        color: '#0F2F4F',
         weight: 0.6,
         opacity: 0.45,
         dashArray: '3 3',
@@ -366,7 +366,7 @@ export default function IndiaMap({
           { sticky: true, direction: 'top', opacity: 1 },
         );
         lyr.on({
-          mouseover: () => lyr.setStyle({ fillOpacity: 0.25, color: '#0B2A5B', weight: 1.2, opacity: 0.9 }),
+          mouseover: () => lyr.setStyle({ fillOpacity: 0.25, color: '#0F2F4F', weight: 1.2, opacity: 0.9 }),
           mouseout: () => layer.resetStyle(lyr),
         });
       },

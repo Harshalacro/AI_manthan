@@ -945,7 +945,7 @@ async def inbound_message(msg: InboundMessage, x_jaldrishti_secret: str | None =
         raise HTTPException(status_code=401, detail="Bad or missing X-JalDrishti-Secret.")
     p = notify.user_by_phone(msg.from_)
     if not p:
-        return {"reply": "This number is not registered for JalDrishti alerts. Add it under Notifications in the dashboard."}
+        return {"reply": "This number is not registered for IRIS alerts. Add it under Notifications in the dashboard."}
     user = {"username": p["username"], "role": p["role"], "state": p.get("state"), "district": p.get("district")}
     text = msg.text.strip()
     low = text.lower()
@@ -956,11 +956,11 @@ async def inbound_message(msg: InboundMessage, x_jaldrishti_secret: str | None =
                 "INSERT INTO notify_log (id, created_at, username, event, title, channels, status, detail) VALUES (?, ?, ?, 'ack', ?, '[]', 'received', ?)",
                 (f"ack-{store.utcnow()}-{p['username']}", store.utcnow(), p["username"], "Acknowledged", msg.from_),
             )
-        return {"reply": "Acknowledged — thank you. JalDrishti logged your acknowledgement.", "ack": True}
+        return {"reply": "Acknowledged — thank you. IRIS logged your acknowledgement.", "ack": True}
     if low in ("", "status", "brief", "hi", "hello", "help"):
         b = briefing.build(user, snap, None, _waves())
         lines = "\n".join(f"• {x}" for x in b["brief"]["en"])
-        return {"reply": f"JalDrishti — {b['scope']['label']['en']}\n{lines}\n\nReply 'status <place>' for one place, ACK to acknowledge, or ask a question."}
+        return {"reply": f"IRIS — {b['scope']['label']['en']}\n{lines}\n\nReply 'status <place>' for one place, ACK to acknowledge, or ask a question."}
     if low.startswith("status "):
         name = low[7:].strip()
         a = next((x for x in snap.assessments if in_scope(x["location"], user) and name in x["location"]["name"].lower()), None)

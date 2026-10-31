@@ -13,11 +13,11 @@
 
 const STRINGS = {
   // masthead
-  appName: { en: 'JalDrishti', hi: 'जलदृष्टि' },
-  appNameAlt: { en: 'जलदृष्टि', hi: 'JalDrishti' },
+  appName: { en: 'IRIS', hi: 'आइरिस' },
+  appNameAlt: { en: 'आइरिस', hi: 'IRIS' },
   tagline: {
-    en: 'Hyperlocal Rainfall Early Warning & Inundation Prediction',
-    hi: 'अति-स्थानीय वर्षा पूर्व चेतावनी एवं जलभराव पूर्वानुमान',
+    en: 'Integrated Rainfall & Inundation Sentinel',
+    hi: 'एकीकृत वर्षा एवं जलभराव प्रहरी',
   },
   prototype: { en: 'Prototype', hi: 'प्रोटोटाइप' },
   live: { en: 'Live', hi: 'लाइव' },

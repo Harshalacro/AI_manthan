@@ -126,7 +126,7 @@ export function StatTile({ label, value, sub, tone = 'default', onClick, active 
  * Hand-rolled SVG rather than a chart library: it renders 40 of these in a list,
  * and Recharts' per-instance overhead is not worth it for a 60x18 polyline.
  */
-export function Sparkline({ values = [], width = 62, height = 18, colour = '#FF671F' }) {
+export function Sparkline({ values = [], width = 62, height = 18, colour = '#1A8CC4' }) {
   if (values.length < 2) {
     return <div style={{ width, height }} className="rounded bg-ink-800/60" />;
   }

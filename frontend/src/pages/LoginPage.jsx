@@ -1,20 +1,21 @@
 import { useEffect, useState } from 'react';
 import { api } from '../lib/api';
-import { AshokaChakra, LangToggle, TricolourRule } from '../components/Chrome';
+import { LangToggle, RainCanvas, Sparkle, WaveSea } from '../components/Chrome';
 
 /**
- * Landing and sign-in.
+ * Landing and sign-in: the IRIS logo centred over a drifting sea.
  *
- * Two doors. Officials (admins) sign in as Central (all India), a State or a
- * District control room. Citizens sign in - or create an account - with an email
- * or mobile number and a home district, and get the public-safety view. Quick
- * demo enters any role without a password, so a judge can compare views in a click.
+ * Residents come first - they sign in, or create an account, with an email or
+ * mobile number and a home district, and get the public-safety view. Response
+ * teams (admins) use the second door, as Nationwide, a State or a District team.
+ * Quick demo enters any role without a password, so a judge can compare views in
+ * a click.
  */
 
 const ROLE_STYLE = {
-  central: { accent: '#0B2A5B', tint: 'rgba(11,42,91,0.06)' },
-  state: { accent: '#E4701E', tint: 'rgba(228,112,30,0.07)' },
-  district: { accent: '#0B8A3D', tint: 'rgba(11,138,61,0.07)' },
+  central: { accent: '#0F2F4F', tint: 'rgba(15,47,79,0.07)' },
+  state: { accent: '#1A8CC4', tint: 'rgba(26,140,196,0.09)' },
+  district: { accent: '#0F766E', tint: 'rgba(15,118,110,0.08)' },
 };
 
 function RoleIcon({ role }) {
@@ -43,7 +44,7 @@ function RoleIcon({ role }) {
 
 export default function LoginPage({ lang, onLangChange, onLogin, onDemo, onRegister }) {
   const [options, setOptions] = useState(null);
-  const [audience, setAudience] = useState('official');
+  const [audience, setAudience] = useState('citizen');
   const [tab, setTab] = useState('demo');
   const [citizenTab, setCitizenTab] = useState('signin');
   const [username, setUsername] = useState('');
@@ -86,12 +87,12 @@ export default function LoginPage({ lang, onLangChange, onLogin, onDemo, onRegis
     }
   };
 
-  const select = 'w-full rounded-lg border border-ink-700 bg-white px-3 py-2.5 text-[13.5px] font-semibold text-ink-100 focus:border-chakra-500 focus:outline-none focus:ring-2 focus:ring-chakra-500/15';
-  const input = 'w-full rounded-lg border border-ink-700 px-3 py-2.5 text-[14px] focus:border-chakra-500 focus:outline-none focus:ring-2 focus:ring-chakra-500/15';
+  const select = 'w-full rounded-xl border border-ink-700 bg-white px-3 py-2.5 text-[13.5px] font-semibold text-ink-100 focus:border-chakra-500 focus:outline-none focus:ring-2 focus:ring-chakra-500/15';
+  const input = 'w-full rounded-xl border border-ink-700 bg-white px-3 py-2.5 text-[14px] focus:border-chakra-500 focus:outline-none focus:ring-2 focus:ring-chakra-500/15';
   const label = 'mb-1 block text-[12.5px] font-bold text-ink-300';
   const submit = 'flex w-full items-center justify-center gap-2 rounded-xl py-3 text-[14.5px] font-bold text-white shadow-sm transition hover:brightness-110 disabled:opacity-50';
   const segmented = (items, value, onChange) => (
-    <div className="inline-flex rounded-xl border border-ink-700 bg-ink-850 p-1">
+    <div className="inline-flex rounded-full border border-ink-700 bg-white/70 p-1">
       {items.map(([k, text]) => (
         <button
           key={k}
@@ -101,7 +102,7 @@ export default function LoginPage({ lang, onLangChange, onLogin, onDemo, onRegis
             setError(null);
           }}
           aria-pressed={value === k}
-          className={`whitespace-nowrap rounded-lg px-5 py-2 text-[13.5px] font-bold transition ${value === k ? 'bg-chakra-500 text-white shadow' : 'text-ink-400 hover:text-chakra-500'}`}
+          className={`whitespace-nowrap rounded-full px-4 py-1.5 text-[13px] font-bold transition sm:px-5 ${value === k ? 'bg-chakra-500 text-white shadow' : 'text-ink-400 hover:text-chakra-500'}`}
         >
           {text}
         </button>
@@ -138,8 +139,8 @@ export default function LoginPage({ lang, onLangChange, onLogin, onDemo, onRegis
     return (
       <div
         key={role}
-        className="group flex flex-col rounded-2xl border border-ink-700 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-lg"
-        style={{ borderTop: `4px solid ${st.accent}` }}
+        className="group flex flex-col rounded-2xl border border-ink-700/80 bg-white/90 p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-lg"
+        style={{ borderTop: `3px solid ${st.accent}` }}
       >
         <div className="mb-3 flex items-center gap-3">
           <span className="grid h-11 w-11 place-items-center rounded-xl" style={{ background: st.tint, color: st.accent }}>
@@ -158,7 +159,7 @@ export default function LoginPage({ lang, onLangChange, onLogin, onDemo, onRegis
           className={`mt-4 flex w-full items-center justify-center gap-2 rounded-xl py-2.5 text-[14px] font-bold text-white shadow-sm transition hover:brightness-110 disabled:opacity-60 ${hiFont}`}
           style={{ background: st.accent }}
         >
-          {busy === role ? L('Opening…', 'खुल रहा है…') : L('Enter dashboard', 'डैशबोर्ड खोलें')}
+          {busy === role ? L('Opening…', 'खुल रहा है…') : L('Open', 'खोलें')}
           <span aria-hidden="true">→</span>
         </button>
       </div>
@@ -179,8 +180,8 @@ export default function LoginPage({ lang, onLangChange, onLogin, onDemo, onRegis
     citizenTab === 'demo' ? (
       <div className="mx-auto max-w-md space-y-4">
         {homeDistrict}
-        <button type="button" disabled={!!busy} onClick={() => run('citizen', () => onDemo('citizen', state, district))} className={`${submit} bg-indiagreen-500`}>
-          {busy ? L('Opening…', 'खुल रहा है…') : L('Enter as a resident', 'निवासी के रूप में प्रवेश')} <span aria-hidden="true">→</span>
+        <button type="button" disabled={!!busy} onClick={() => run('citizen', () => onDemo('citizen', state, district))} className={`${submit} bg-gradient-to-r from-saffron-500 to-indiagreen-500`}>
+          {busy ? L('Opening…', 'खुल रहा है…') : L('See my area', 'मेरा क्षेत्र देखें')} <span aria-hidden="true">→</span>
         </button>
       </div>
     ) : citizenTab === 'register' ? (
@@ -204,7 +205,7 @@ export default function LoginPage({ lang, onLangChange, onLogin, onDemo, onRegis
           <input id="jd-newpass" type="password" value={password} onChange={(e) => setPassword(e.target.value)} autoComplete="new-password" className={input} />
         </div>
         {homeDistrict}
-        <button type="submit" disabled={!!busy || !name || !contact || password.length < 8} className={`${submit} bg-indiagreen-500`}>
+        <button type="submit" disabled={!!busy || !name || !contact || password.length < 8} className={`${submit} bg-gradient-to-r from-saffron-500 to-indiagreen-500`}>
           {busy ? L('Creating…', 'बन रहा है…') : L('Create account', 'खाता बनाएँ')}
         </button>
       </form>
@@ -224,7 +225,7 @@ export default function LoginPage({ lang, onLangChange, onLogin, onDemo, onRegis
           <label className={label} htmlFor="jd-cpass">{L('Password', 'पासवर्ड')}</label>
           <input id="jd-cpass" type="password" value={password} onChange={(e) => setPassword(e.target.value)} autoComplete="current-password" className={input} />
         </div>
-        <button type="submit" disabled={!!busy || !contact || !password} className={`${submit} bg-chakra-500`}>
+        <button type="submit" disabled={!!busy || !contact || !password} className={`${submit} bg-gradient-to-r from-chakra-500 to-saffron-600`}>
           {busy ? L('Signing in…', 'प्रवेश हो रहा है…') : L('Sign in', 'प्रवेश करें')}
         </button>
         <p className="text-center text-[12.5px] text-ink-400">
@@ -237,98 +238,101 @@ export default function LoginPage({ lang, onLangChange, onLogin, onDemo, onRegis
     );
 
   return (
-    <div className={`flex min-h-full flex-col bg-ink-850 ${hiFont}`}>
-      {/* ------------------------------------------------------- header */}
-      <header>
-        <div className="bg-chakra-500 text-white">
-          <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-1.5">
-            <span className="truncate text-[11px] text-white/90">
-              {L('Flood forecasting research prototype · For official warnings see IMD / CWC', 'बाढ़ पूर्वानुमान अनुसंधान प्रोटोटाइप · आधिकारिक चेतावनी हेतु IMD / CWC देखें')}
-            </span>
-            <LangToggle lang={lang} onChange={onLangChange} tone="dark" />
-          </div>
-        </div>
-        <TricolourRule />
-      </header>
+    <div className={`flex min-h-full flex-col bg-ink-950 ${hiFont}`}>
+      {/* ------------------------------------------------- sky and sea */}
+      <section className="iris-sky relative flex min-h-[100svh] flex-col overflow-hidden">
+        <div className="pointer-events-none absolute left-1/2 top-24 h-[420px] w-[420px] -translate-x-1/2 rounded-full bg-[radial-gradient(circle,rgba(34,211,238,0.22),rgba(109,93,252,0.10)_45%,transparent_70%)] blur-2xl" aria-hidden="true" />
+        <header className="relative z-10 flex items-center justify-between gap-3 px-4 py-3 sm:px-6">
+          <span className="truncate rounded-full border border-white/80 bg-white/60 px-3 py-1 text-[11px] font-medium text-ink-400 backdrop-blur">
+            {L('Research prototype · official warnings: IMD / CWC', 'शोध प्रोटोटाइप · आधिकारिक चेतावनी: IMD / CWC')}
+          </span>
+          <LangToggle lang={lang} onChange={onLangChange} />
+        </header>
 
-      <main id="main-content" className="flex-1">
-        {/* --------------------------------------------------------- hero */}
-        <section className="relative overflow-hidden bg-gradient-to-b from-white via-white to-ink-850">
-          <svg className="pointer-events-none absolute inset-x-0 bottom-0 h-40 w-full text-chakra-500/[0.06]" viewBox="0 0 1440 160" preserveAspectRatio="none" aria-hidden="true">
-            <path fill="currentColor" d="M0 96c120-32 240-32 360 0s240 32 360 0 240-32 360 0 240 32 360 0v64H0z" />
-            <path fill="currentColor" d="M0 124c120-24 240-24 360 0s240 24 360 0 240-24 360 0 240 24 360 0v36H0z" />
-          </svg>
-          <div className="relative mx-auto flex max-w-4xl flex-col items-center px-4 pb-16 pt-12 text-center">
-            <div className="grid h-24 w-24 place-items-center rounded-full border-[3px] border-saffron-500 bg-white text-chakra-500 shadow-lg">
-              <AshokaChakra size={58} />
-            </div>
-            <div className="mt-5 flex flex-wrap items-baseline justify-center gap-x-3">
-              <span className="font-devanagari text-[40px] font-bold leading-tight text-saffron-500 sm:text-[48px]">जलदृष्टि</span>
-              <h1 className="text-[40px] font-extrabold leading-tight tracking-tight text-chakra-500 sm:text-[48px]">JalDrishti</h1>
-            </div>
-            <p className="mt-2 text-[16px] font-semibold text-ink-200 sm:text-[18px]">
-              {L('Hyperlocal rainfall early warning & inundation prediction for India', 'भारत हेतु अति-स्थानीय वर्षा पूर्व चेतावनी एवं जलभराव पूर्वानुमान')}
-            </p>
-            <p className="mt-1 max-w-2xl text-[14px] text-ink-400">
-              {L('Sign in to see what matters to your area — all of India, your state, or your district.', 'अपने क्षेत्र की जानकारी हेतु प्रवेश करें — पूरा भारत, आपका राज्य या आपका ज़िला।')}
-            </p>
-            <div className="mt-6 flex flex-wrap justify-center gap-2.5">
-              {[
-                [String(options?.places ?? nDistricts), L('places monitored', 'निगरानी स्थान')],
-                [String(nStates), L('states & UTs', 'राज्य व केंद्र शासित प्रदेश')],
-                ['1,000+', L('CWC river gauges', 'CWC नदी गेज')],
-                ['15 min', L('river gauge checks', 'नदी गेज जाँच')],
-              ].map(([v, k]) => (
-                <div key={k} className="flex items-baseline gap-1.5 rounded-full border border-ink-700 bg-white px-4 py-1.5 shadow-sm">
-                  <span className="font-mono text-[15px] font-extrabold text-chakra-500">{v}</span>
-                  <span className="text-[12px] font-medium text-ink-400">{k}</span>
-                </div>
-              ))}
-            </div>
+        <main id="main-content" className="relative z-10 flex flex-1 flex-col items-center px-4 pb-48 pt-2 text-center sm:pb-56">
+          <div className="relative">
+            <img
+              src="/iris-logo.png"
+              alt="IRIS"
+              width="387"
+              height="443"
+              className="relative h-auto w-[150px] animate-float drop-shadow-[0_18px_30px_rgba(15,94,138,0.18)] sm:w-[190px]"
+              draggable="false"
+            />
+            {/* What IRIS watches, drifting around the emblem (wide screens only). */}
+            {[
+              ['-left-52 top-6', '0s', L('Live rainfall', 'लाइव वर्षा'), 'bg-saffron-500'],
+              ['-left-60 top-40', '1.4s', L('River gauges', 'नदी गेज'), 'bg-indiagreen-400'],
+              ['-right-52 top-10', '0.7s', L('AI nowcast', 'एआई नाउकास्ट'), 'ai'],
+              ['-right-64 top-44', '2.1s', L('Street-level flooding', 'गली-स्तर जलभराव'), 'bg-chakra-300'],
+            ].map(([pos, delay, text, dot]) => (
+              <span
+                key={text}
+                className={`glass pointer-events-none absolute hidden animate-float items-center gap-2 whitespace-nowrap rounded-full px-3.5 py-1.5 text-[12px] font-bold text-chakra-500 shadow-[0_10px_30px_-12px_rgba(15,47,79,0.35)] lg:flex ${pos}`}
+                style={{ animationDelay: delay }}
+                aria-hidden="true"
+              >
+                {dot === 'ai' ? (
+                  <span className="grid h-5 w-5 place-items-center rounded-full bg-gradient-to-br from-aurora-violet to-aurora-cyan text-white">
+                    <Sparkle size={11} />
+                  </span>
+                ) : (
+                  <span className="relative flex h-2 w-2">
+                    <span className={`absolute inline-flex h-full w-full animate-ping rounded-full opacity-60 ${dot}`} />
+                    <span className={`relative inline-flex h-2 w-2 rounded-full ${dot}`} />
+                  </span>
+                )}
+                {text}
+              </span>
+            ))}
           </div>
-        </section>
+          <p className="mt-3 font-display text-[15px] font-semibold uppercase tracking-[0.3em] text-chakra-400 sm:text-[19px]">
+            {L('Integrated Rainfall & Inundation Sentinel', 'एकीकृत वर्षा एवं जलभराव प्रहरी')}
+          </p>
+          <p className="mt-2 max-w-xl text-[14.5px] leading-relaxed text-ink-400">
+            {L(
+              'Know when rain will flood your streets before it does: live rainfall, rivers and street-level waterlogging for where you live.',
+              'बारिश से आपकी गलियों में पानी भरने से पहले जानें: आपके इलाके की लाइव वर्षा, नदियाँ और गली-स्तर जलभराव।',
+            )}
+          </p>
 
-        {/* ------------------------------------------------------ sign in */}
-        <section className="relative mx-auto -mt-8 max-w-6xl px-4 pb-12">
-          <div className="rounded-3xl border border-ink-700 bg-white/95 p-5 shadow-xl backdrop-blur sm:p-7">
-            <div className="flex flex-col items-center gap-2 text-center">
-              <h2 className="text-[20px] font-extrabold text-chakra-500">{L('Choose how to enter', 'प्रवेश का तरीका चुनें')}</h2>
-              <div className="mt-1 grid w-full max-w-xl grid-cols-2 gap-3">
-                {[
-                  ['citizen', L('Citizen', 'नागरिक'), L('Risk, safety steps and roads to avoid in your district', 'आपके ज़िले का जोखिम, सुरक्षा उपाय व बचने वाली सड़कें')],
-                  ['official', L('Official (admin)', 'अधिकारी (एडमिन)'), L('Control room for central, state and district teams', 'केंद्र, राज्य व ज़िला टीमों का नियंत्रण कक्ष')],
-                ].map(([k, title, sub]) => (
+          {/* ---------------------------------------------------- card */}
+          <div
+            className={`ai-frame mt-7 w-full rounded-[28px] p-5 text-left shadow-[0_30px_80px_-30px_rgba(15,47,79,0.45)] sm:p-7 ${
+              audience === 'official' && tab === 'demo' ? 'max-w-5xl' : 'max-w-lg'
+            }`}
+          >
+            <div className="flex flex-col items-center gap-3 text-center">
+              {segmented(
+                [
+                  ['citizen', L('For residents', 'निवासियों हेतु')],
+                  ['official', L('For response teams', 'प्रतिक्रिया टीमों हेतु')],
+                ],
+                audience,
+                setAudience,
+              )}
+              <div className="flex flex-wrap justify-center gap-x-4 gap-y-1">
+                {(audience === 'official'
+                  ? [...(options?.demo !== false ? [['demo', L('Quick demo', 'त्वरित डेमो')]] : []), ['password', L('Sign in with account', 'खाते से प्रवेश')]].map((x) => [...x, tab, setTab])
+                  : [
+                      ['signin', L('Sign in', 'प्रवेश करें')],
+                      ['register', L('Create account', 'खाता बनाएँ')],
+                      ...(options?.demo !== false ? [['demo', L('Quick demo', 'त्वरित डेमो')]] : []),
+                    ].map((x) => [...x, citizenTab, setCitizenTab])
+                ).map(([k, text, value, onChange]) => (
                   <button
                     key={k}
                     type="button"
                     onClick={() => {
-                      setAudience(k);
+                      onChange(k);
                       setError(null);
                     }}
-                    aria-pressed={audience === k}
-                    className={`rounded-xl border-2 px-4 py-3 text-left transition ${audience === k ? 'border-chakra-500 bg-chakra-500/[0.05]' : 'border-ink-700 hover:border-chakra-500/50'}`}
+                    aria-pressed={value === k}
+                    className={`border-b-2 px-1 pb-1 text-[13px] font-bold transition ${value === k ? 'border-saffron-500 text-chakra-500' : 'border-transparent text-ink-500 hover:text-chakra-500'}`}
                   >
-                    <div className="text-[15px] font-extrabold text-chakra-500">{title}</div>
-                    <div className="mt-0.5 text-[12px] leading-snug text-ink-400">{sub}</div>
+                    {text}
                   </button>
                 ))}
-              </div>
-              <div className="mt-2">
-                {audience === 'official'
-                  ? segmented(
-                      [...(options?.demo !== false ? [['demo', L('Quick demo', 'त्वरित डेमो')]] : []), ['password', L('Sign in with account', 'खाते से प्रवेश')]],
-                      tab,
-                      setTab,
-                    )
-                  : segmented(
-                      [
-                        ['signin', L('Sign in', 'प्रवेश करें')],
-                        ['register', L('Create account', 'खाता बनाएँ')],
-                        ...(options?.demo !== false ? [['demo', L('Quick demo', 'त्वरित डेमो')]] : []),
-                      ],
-                      citizenTab,
-                      setCitizenTab,
-                    )}
               </div>
               <p className="text-[12.5px] text-ink-500">
                 {audience === 'citizen'
@@ -338,8 +342,8 @@ export default function LoginPage({ lang, onLangChange, onLogin, onDemo, onRegis
                       ? L('No password needed — pick a district to see the resident view.', 'पासवर्ड की ज़रूरत नहीं — निवासी दृश्य हेतु ज़िला चुनें।')
                       : L('Use the email or mobile number you registered with.', 'पंजीकृत ईमेल या मोबाइल नंबर का उपयोग करें।')
                   : tab === 'demo'
-                    ? L('No password needed — pick a role and an area to try it.', 'पासवर्ड की ज़रूरत नहीं — कोई भूमिका व क्षेत्र चुनें।')
-                    : L('Use the account issued for your control room.', 'अपने नियंत्रण कक्ष के खाते का उपयोग करें।')}
+                    ? L('No password needed — pick a team and an area to try it.', 'पासवर्ड की ज़रूरत नहीं — कोई टीम व क्षेत्र चुनें।')
+                    : L('Use the account issued for your team.', 'अपनी टीम के खाते का उपयोग करें।')}
               </p>
             </div>
 
@@ -356,12 +360,12 @@ export default function LoginPage({ lang, onLangChange, onLogin, onDemo, onRegis
                 <div className="grid gap-4 md:grid-cols-3">
                   {roleCard({
                     role: 'central',
-                    title: L('Central', 'केंद्र'),
-                    sub: L('NDMA · all India', 'NDMA · पूरा भारत'),
+                    title: L('Nationwide', 'राष्ट्रव्यापी'),
+                    sub: L('All of India', 'पूरा भारत'),
                     body: (
                       <>
                         <p className="text-[13px] leading-snug text-ink-300">
-                          {L('National control room: every state, river and alert in one view.', 'राष्ट्रीय नियंत्रण कक्ष: हर राज्य, नदी और चेतावनी एक दृश्य में।')}
+                          {L('Every state, river and alert across India in one view.', 'पूरे भारत का हर राज्य, नदी और चेतावनी एक दृश्य में।')}
                         </p>
                         <div className="rounded-lg bg-ink-850 px-3 py-2.5 text-[13px] font-semibold text-ink-200">
                           {L(`All ${nStates} states & UTs`, `सभी ${nStates} राज्य व केंद्र शासित प्रदेश`)}
@@ -371,12 +375,12 @@ export default function LoginPage({ lang, onLangChange, onLogin, onDemo, onRegis
                   })}
                   {roleCard({
                     role: 'state',
-                    title: L('State', 'राज्य'),
-                    sub: L('SDMA · one state', 'SDMA · एक राज्य'),
+                    title: L('State team', 'राज्य टीम'),
+                    sub: L('One state', 'एक राज्य'),
                     body: (
                       <>
                         <p className="text-[13px] leading-snug text-ink-300">
-                          {L('State Disaster Management Authority: your districts, rivers and gauges.', 'राज्य आपदा प्रबंधन प्राधिकरण: आपके ज़िले, नदियाँ और गेज।')}
+                          {L('Your districts, rivers and gauges, and who needs help first.', 'आपके ज़िले, नदियाँ और गेज, और किसे पहले मदद चाहिए।')}
                         </p>
                         {stateSelect}
                       </>
@@ -384,12 +388,12 @@ export default function LoginPage({ lang, onLangChange, onLogin, onDemo, onRegis
                   })}
                   {roleCard({
                     role: 'district',
-                    title: L('District', 'ज़िला'),
-                    sub: L('DEOC · one district', 'DEOC · एक ज़िला'),
+                    title: L('District team', 'ज़िला टीम'),
+                    sub: L('One district', 'एक ज़िला'),
                     body: (
                       <>
                         <p className="text-[13px] leading-snug text-ink-300">
-                          {L('District emergency operations centre: your town down to street level.', 'ज़िला आपात संचालन केंद्र: आपका शहर, गली-स्तर तक।')}
+                          {L('Your town down to street level, with a ready response plan.', 'आपका शहर गली-स्तर तक, तैयार प्रतिक्रिया योजना के साथ।')}
                         </p>
                         <div className="grid grid-cols-2 gap-2">
                           {stateSelect}
@@ -447,20 +451,39 @@ export default function LoginPage({ lang, onLangChange, onLogin, onDemo, onRegis
               )}
             </div>
           </div>
-        </section>
 
-      </main>
+          <div className="mt-6 flex flex-wrap justify-center gap-2">
+            {[
+              [String(options?.places ?? nDistricts), L('places watched', 'निगरानी स्थान')],
+              [String(nStates), L('states & UTs', 'राज्य व केंद्र शासित प्रदेश')],
+              ['1,000+', L('river gauges', 'नदी गेज')],
+              ['15 min', L('fresh readings', 'ताज़ा रीडिंग')],
+            ].map(([v, k]) => (
+              <div key={k} className="flex items-baseline gap-1.5 rounded-full border border-white/90 bg-white/60 px-3.5 py-1 backdrop-blur">
+                <span className="font-mono text-[13.5px] font-bold text-chakra-500">{v}</span>
+                <span className="text-[11.5px] font-medium text-ink-400">{k}</span>
+              </div>
+            ))}
+          </div>
+        </main>
+
+        <WaveSea height={200} />
+        <RainCanvas />
+      </section>
 
       {/* ------------------------------------------------------- footer */}
-      <footer className="border-t-4 border-saffron-500 bg-chakra-500 text-white">
+      {/* Starts in the front wave's deepest blue so the sea runs into it. */}
+      <footer className="bg-gradient-to-b from-[#0F5E8A] to-chakra-500 text-white">
         <div className="mx-auto grid max-w-6xl gap-8 px-4 py-8 md:grid-cols-3">
           <div>
-            <div className="flex items-center gap-2.5">
-              <span className="grid h-10 w-10 place-items-center rounded-full bg-white text-chakra-500">
-                <AshokaChakra size={26} />
+            <div className="flex items-center gap-3">
+              <span className="grid h-11 w-11 place-items-center rounded-full bg-white p-1">
+                <img src="/iris-mark.png" alt="" className="h-full w-full object-contain" />
               </span>
-              <span className="font-devanagari text-[18px] font-bold text-saffron-300">जलदृष्टि</span>
-              <span className="text-[18px] font-extrabold">JalDrishti</span>
+              <div className="leading-tight">
+                <div className="font-display text-[24px] font-semibold tracking-[0.18em]">IRIS</div>
+                <div className="text-[10.5px] uppercase tracking-[0.14em] text-white/70">{L('Integrated Rainfall & Inundation Sentinel', 'एकीकृत वर्षा एवं जलभराव प्रहरी')}</div>
+              </div>
             </div>
             <p className="mt-3 text-[12.5px] leading-relaxed text-white/75">
               {L(
@@ -470,7 +493,7 @@ export default function LoginPage({ lang, onLangChange, onLogin, onDemo, onRegis
             </p>
           </div>
           <div>
-            <h3 className="text-[12px] font-bold uppercase tracking-wider text-saffron-300">{L('Data sources', 'आँकड़ा स्रोत')}</h3>
+            <h3 className="text-[12px] font-bold uppercase tracking-wider text-[#9ED8F2]">{L('Data sources', 'आँकड़ा स्रोत')}</h3>
             <ul className="mt-3 space-y-1.5 text-[12.5px] text-white/80">
               <li>{L('Central Water Commission — river gauges', 'केंद्रीय जल आयोग — नदी गेज')}</li>
               <li>{L('NDMA SACHET — IMD, CWC & SDMA alerts (CAP)', 'NDMA SACHET — IMD, CWC व SDMA चेतावनियाँ (CAP)')}</li>
@@ -480,7 +503,7 @@ export default function LoginPage({ lang, onLangChange, onLogin, onDemo, onRegis
             </ul>
           </div>
           <div>
-            <h3 className="text-[12px] font-bold uppercase tracking-wider text-saffron-300">{L('In an emergency', 'आपातकाल में')}</h3>
+            <h3 className="text-[12px] font-bold uppercase tracking-wider text-[#9ED8F2]">{L('In an emergency', 'आपातकाल में')}</h3>
             <ul className="mt-3 space-y-2 text-[13px]">
               {[
                 ['112', L('National emergency number', 'राष्ट्रीय आपात नंबर')],

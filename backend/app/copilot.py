@@ -1,5 +1,5 @@
 """
-JalDrishti Copilot: questions in plain English or Hindi, answered from the live
+IRIS Copilot: questions in plain English or Hindi, answered from the live
 risk snapshot, plus generated public advisories.
 
 Grounding is the whole design. The model receives a compact table of every
@@ -45,7 +45,7 @@ TIER_WORD = {
     "hi": {"red": "लाल", "orange": "नारंगी", "yellow": "पीला", "green": "हरा"},
 }
 
-SYSTEM_INSTRUCTIONS = """You are JalDrishti Copilot, an assistant inside a flood-risk dashboard for India used by disaster-management officers.
+SYSTEM_INSTRUCTIONS = """You are IRIS Copilot (IRIS = Integrated Rainfall & Inundation Sentinel), an assistant inside a flood-risk app for India used by residents and disaster-response teams.
 
 How to answer:
 - Answer ONLY from the LIVE DATA table provided. Never invent a location, a number, a date or a forecast that is not in it. If the data does not contain the answer, say so plainly.
@@ -237,7 +237,7 @@ def offline_advisory(a: dict) -> dict:
                 f"Helplines: {HELPLINES['en']}"
             )
             avoid = f" Avoid {routes[0]}." if routes else " Avoid flooded roads."
-            sms = f"JalDrishti: {name} flood risk {TIER_WORD['en'][tier]}.{avoid} Drink boiled water. Emergency 112/1078"
+            sms = f"IRIS: {name} flood risk {TIER_WORD['en'][tier]}.{avoid} Drink boiled water. Emergency 112/1078"
         out[lang] = {"title": title, "body": body, "sms": sms[:160]}
     return out
 

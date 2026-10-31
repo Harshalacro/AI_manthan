@@ -182,8 +182,8 @@ export default function RiversPage({ lang, river: routeRiver, onOpenStation }) {
           {[
             [lang === 'hi' ? 'खतरे पर नदियाँ' : 'Rivers with a reach above danger', totals.danger, '#C1121F'],
             [lang === 'hi' ? 'चेतावनी पर नदियाँ' : 'Rivers above warning', totals.warning, '#E4701E'],
-            [lang === 'hi' ? 'नदियों पर गेज' : 'Gauges placed on rivers', totals.gauges, '#0B2A5B'],
-            [lang === 'hi' ? 'दर्शाई गई नदियाँ' : 'Rivers mapped', totals.rivers, '#0B2A5B'],
+            [lang === 'hi' ? 'नदियों पर गेज' : 'Gauges placed on rivers', totals.gauges, '#0F2F4F'],
+            [lang === 'hi' ? 'दर्शाई गई नदियाँ' : 'Rivers mapped', totals.rivers, '#0F2F4F'],
           ].map(([k, v, c]) => (
             <div key={k} className="panel px-4 py-3">
               <div className={`text-[10px] font-bold uppercase tracking-wider text-ink-500 ${hi(lang)}`}>{k}</div>

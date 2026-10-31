@@ -1,4 +1,4 @@
-# Deploying JalDrishti
+# Deploying IRIS
 
 The **backend** (FastAPI) runs on **Render**. The **frontend** (React + Vite) runs on **Vercel**.
 
@@ -180,7 +180,7 @@ The backend only answers browsers loading the site from origins it knows.
 
 Open the Vercel URL. The masthead should show **LIVE · x min ago**, and the map should show town circles.
 
-If the page stays on "Cannot reach the JalDrishti API":
+If the page stays on "Cannot reach the IRIS API":
 
 1. Open the browser's DevTools and look at the Console.
    - A **CORS** error means step 3 is wrong. The origin must match exactly: `https`, no trailing slash.
@@ -192,7 +192,7 @@ If the page stays on "Cannot reach the JalDrishti API":
 ## 4. Keep the backend awake
 
 Render's free plan stops an instance after 15 minutes with no inbound traffic, and
-that stops JalDrishti's background work too: the 15-minute gauge sweep, the
+that stops IRIS's background work too: the 15-minute gauge sweep, the
 90-minute refresh, re-planning and automatic alerts. Two layers keep it running:
 
 1. **Built in, nothing to set up.** The backend requests its own public URL

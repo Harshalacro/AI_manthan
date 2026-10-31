@@ -150,17 +150,17 @@ export function TrajectoryChart({ trajectory = [], lang, height = 168 }) {
             dataKey="bandSpan"
             stackId="band"
             stroke="none"
-            fill="#F26A1B"
+            fill="#1A8CC4"
             fillOpacity={0.18}
             isAnimationActive={false}
           />
 
           <Line
             dataKey="score"
-            stroke="#F26A1B"
+            stroke="#1A8CC4"
             strokeWidth={2.4}
-            dot={{ r: 3.2, fill: '#FFFFFF', stroke: '#F26A1B', strokeWidth: 2 }}
-            activeDot={{ r: 5, fill: '#F26A1B', stroke: '#FFFFFF', strokeWidth: 2 }}
+            dot={{ r: 3.2, fill: '#FFFFFF', stroke: '#1A8CC4', strokeWidth: 2 }}
+            activeDot={{ r: 5, fill: '#1A8CC4', stroke: '#FFFFFF', strokeWidth: 2 }}
             isAnimationActive
             animationDuration={650}
           />
@@ -295,10 +295,10 @@ export function RiverChart({ river, lang, height = 168 }) {
 
           <Line
             dataKey="value"
-            stroke="#0B2A5B"
+            stroke="#0F2F4F"
             strokeWidth={2.2}
             dot={false}
-            activeDot={{ r: 4, fill: '#F26A1B', stroke: '#FFFFFF', strokeWidth: 2 }}
+            activeDot={{ r: 4, fill: '#1A8CC4', stroke: '#FFFFFF', strokeWidth: 2 }}
             isAnimationActive
             animationDuration={650}
             connectNulls
@@ -351,9 +351,9 @@ export function ScoreHistoryChart({ history = [], lang, height = 92 }) {
           />
           <Line
             dataKey="score"
-            stroke="#F26A1B"
+            stroke="#1A8CC4"
             strokeWidth={2}
-            dot={{ r: 2.2, fill: '#F26A1B', stroke: 'none' }}
+            dot={{ r: 2.2, fill: '#1A8CC4', stroke: 'none' }}
             isAnimationActive={false}
           />
         </ComposedChart>

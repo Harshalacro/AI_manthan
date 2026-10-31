@@ -32,7 +32,7 @@ function Badge({ children, tone = 'navy' }) {
   );
 }
 
-function Meter({ value, colour = '#F26A1B' }) {
+function Meter({ value, colour = '#1A8CC4' }) {
   return (
     <div className="h-1.5 w-full overflow-hidden rounded-full bg-ink-800">
       <div
@@ -163,7 +163,7 @@ export function AIAssessmentCard({ lang, assessment, locationsById = {} }) {
                     </div>
                     {m.headline && <p className="mt-0.5 line-clamp-2 text-[10.5px] leading-snug text-ink-400">{m.headline}</p>}
                     <div className="mt-1">
-                      <Meter value={m.similarity * 100} colour="#0B2A5B" />
+                      <Meter value={m.similarity * 100} colour="#0F2F4F" />
                     </div>
                   </li>
                 );

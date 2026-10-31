@@ -41,7 +41,7 @@ async function request(path, { signal, method = 'GET', body } = {}) {
   } catch (err) {
     if (err.name === 'AbortError') throw err;
     throw new ApiError(
-      'Cannot reach the JalDrishti API. Is the backend running on port 8000?',
+      'Cannot reach the IRIS API. Is the backend running on port 8000?',
       { status: 0 },
     );
   }

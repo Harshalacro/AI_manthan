@@ -1,4 +1,4 @@
-# JalDrishti — Architecture
+# IRIS — Architecture
 
 Companion to the [README](../README.md). This document covers the data flow, the
 design decisions that were genuinely contested, and the mistakes that shaped the

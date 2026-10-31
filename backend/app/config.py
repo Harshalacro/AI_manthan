@@ -1,5 +1,5 @@
 """
-Central configuration for the JalDrishti risk engine.
+Central configuration for the IRIS risk engine.
 
 Every threshold in this file is traceable to a published source rather than being
 tuned by eye, because the whole point of the dashboard is that a reviewer can ask
@@ -11,9 +11,9 @@ from __future__ import annotations
 import os
 from pathlib import Path
 
-APP_NAME = "JalDrishti"
-APP_TAGLINE_EN = "Hyperlocal Rainfall Early Warning & Inundation Prediction"
-APP_TAGLINE_HI = "अति-स्थानीय वर्षा पूर्व चेतावनी एवं जलभराव पूर्वानुमान"
+APP_NAME = "IRIS"
+APP_TAGLINE_EN = "Integrated Rainfall & Inundation Sentinel"
+APP_TAGLINE_HI = "एकीकृत वर्षा एवं जलभराव प्रहरी"
 VERSION = "1.0.0"
 
 BASE_DIR = Path(__file__).resolve().parent

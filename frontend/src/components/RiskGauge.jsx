@@ -142,7 +142,7 @@ export default function RiskGauge({ score = 0, tier = 'green', size = 200, label
             y1={inY}
             x2={outX}
             y2={outY}
-            stroke="#0B2A5B"
+            stroke="#0F2F4F"
             strokeWidth="3"
             strokeLinecap="round"
           />

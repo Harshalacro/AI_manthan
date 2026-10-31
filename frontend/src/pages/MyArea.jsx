@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { href } from '../lib/router';
 import { roleName } from '../lib/auth';
 import { canonicalState, directionGlyph, stateName, tierColour, TIER_LABELS, weatherInfo } from '../lib/format';
+import { TIER_GLOW as GLOW, TierRing, WaterTank } from '../components/Chrome';
+import WeatherScene, { sceneFor, WeatherChip } from '../components/WeatherScene';
 
 /**
  * "My area": the one screen an officer needs, in plain language.
@@ -27,7 +29,7 @@ const ACTION = {
 
 // Readable text on white for each tier (yellow itself is too light for text).
 const INK = { red: '#A50F1A', orange: '#B4530F', yellow: '#7A5E00', green: '#0A6E31' };
-const ink = (tier) => INK[tier] ?? '#0B2A5B';
+const ink = (tier) => INK[tier] ?? '#0F2F4F';
 
 function Icon({ name, size = 18 }) {
   const p = { width: size, height: size, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 2, strokeLinecap: 'round', strokeLinejoin: 'round', 'aria-hidden': true };
@@ -64,10 +66,10 @@ function Sparkle({ size = 16 }) {
 
 function Card({ title, icon, count, right, children, tour, bodyClass = 'p-4' }) {
   return (
-    <section className="overflow-hidden rounded-2xl border border-ink-700 bg-white shadow-sm" data-tour={tour}>
-      <div className="flex items-center gap-2.5 border-b border-ink-800 px-4 py-3">
+    <section className="glass-card overflow-hidden rounded-2xl transition hover:shadow-lg" data-tour={tour}>
+      <div className="flex items-center gap-2.5 border-b border-white/70 bg-gradient-to-r from-white/70 to-white/10 px-4 py-3">
         {icon && (
-          <span className="grid h-8 w-8 place-items-center rounded-lg bg-navy-50 text-chakra-500">
+          <span className="grid h-8 w-8 place-items-center rounded-lg bg-gradient-to-br from-saffron-500 to-indiagreen-500 text-white shadow-sm">
             <Icon name={icon} size={16} />
           </span>
         )}
@@ -177,6 +179,8 @@ function AlertItem({ al, lang }) {
   );
 }
 
+const LEVEL = { green: 18, yellow: 42, orange: 66, red: 88 };
+
 export default function MyArea({ lang, user, brief, error, onRetry, onOpenCopilot }) {
   const [showAll, setShowAll] = useState(false);
   const L = (en, hi) => (lang === 'hi' ? hi : en);
@@ -196,7 +200,7 @@ export default function MyArea({ lang, user, brief, error, onRetry, onOpenCopilo
   // A state or the whole country has no single level: one Red district does not
   // make all of India Red. Those views lead with counts; only a district gets a level.
   const aggregate = user.role !== 'district';
-  const colour = aggregate ? '#0B2A5B' : tierColour(st.tier);
+  const colour = aggregate ? '#0F2F4F' : tierColour(st.tier);
   const plural = (n, one, many) => `${n} ${n === 1 ? one : many}`;
   const headline = !aggregate
     ? L(ACTION[st.tier].en, ACTION[st.tier].hi)
@@ -220,6 +224,9 @@ export default function MyArea({ lang, user, brief, error, onRetry, onOpenCopilo
   const mapHref = href(user.role === 'central' ? '/map' : `/state/${canonicalState(user.state)}`);
   const total = Math.max(1, st.places);
   const worseCount = brief.changes.items.filter((c) => c.worse).length;
+  const scene = sceneFor(brief.places, aggregate ? urgent : st.tier);
+  const statusGlow = GLOW[aggregate ? urgent ?? 'green' : st.tier];
+  const darkBtn = 'glass-dark inline-flex items-center gap-1.5 rounded-full px-3.5 py-2 text-[12.5px] font-bold text-white transition hover:bg-white/20';
 
   const kpis = [
     ['bell', brief.alerts.length, L('Active alerts', 'सक्रिय चेतावनियाँ'), brief.alerts.length ? tierColour(brief.alerts[0].level) : '#0B8A3D'],
@@ -232,81 +239,82 @@ export default function MyArea({ lang, user, brief, error, onRetry, onOpenCopilo
     <div id="main-content" className={`mx-auto w-full max-w-[1320px] space-y-5 px-4 py-5 ${hiFont}`}>
       {/* ------------------------------------------------------------ status */}
       <section
-        className="relative overflow-hidden rounded-3xl border border-ink-700 bg-white shadow-sm"
+        className="relative overflow-hidden rounded-[28px] bg-midnight-900 text-white shadow-[0_24px_60px_-30px_rgba(4,14,28,0.7)] ring-1 ring-white/5"
         data-tour="my-status"
-        style={{ backgroundImage: `linear-gradient(110deg, ${colour}1F 0%, ${colour}08 38%, #ffffff 70%)` }}
       >
-        <div className="absolute inset-y-0 left-0 w-1.5" style={{ background: colour }} aria-hidden="true" />
-        <div className="flex flex-wrap items-center gap-6 px-6 py-6 sm:px-8">
-          <div className="flex flex-col items-center">
-            <div className="grid h-24 w-24 place-items-center rounded-full bg-white shadow-md" style={{ boxShadow: `0 0 0 6px ${colour}33, 0 8px 20px -8px ${colour}` }}>
-              <div className="grid h-[76px] w-[76px] place-items-center rounded-full text-white" style={{ background: colour }}>
-                {aggregate ? <Icon name={urgent ? 'map' : 'check'} size={34} /> : <Icon name={st.tier === 'green' ? 'check' : 'warn'} size={34} />}
+        <WeatherScene scene={scene} />
+
+        <div className="relative grid items-center gap-6 px-6 py-7 sm:px-8 lg:grid-cols-[auto_1fr_300px]">
+          {aggregate ? (
+            <TierRing counts={st.counts} size={120} label={L('places', 'स्थान')} />
+          ) : (
+            <WaterTank level={LEVEL[st.tier]} colour={colour} size={120}>
+              <div>
+                <Icon name={st.tier === 'green' ? 'check' : 'warn'} size={28} />
+                <div className="mt-1 text-[10.5px] font-extrabold uppercase tracking-[0.14em]">{L(TIER_LABELS[st.tier].en, TIER_LABELS[st.tier].hi)}</div>
               </div>
-            </div>
-            <span className="mt-2 text-[12px] font-extrabold uppercase tracking-wider" style={{ color: aggregate ? colour : ink(st.tier) }}>
-              {aggregate
-                ? user.role === 'central' ? L('National view', 'राष्ट्रीय दृश्य') : L('State view', 'राज्य दृश्य')
-                : L(TIER_LABELS[st.tier].en, TIER_LABELS[st.tier].hi)}
-            </span>
-          </div>
+            </WaterTank>
+          )}
 
-          <div className="min-w-[240px] flex-1">
-            <div className="flex flex-wrap items-center gap-x-2 text-[12px] font-bold uppercase tracking-wider text-ink-500">
-              <span>{roleName(user, lang)}</span>
-              <span className="text-ink-600">•</span>
-              <span className="normal-case tracking-normal">{today}</span>
+          <div className="min-w-0">
+            <div className="flex flex-wrap items-center gap-x-2 text-[12px] font-semibold text-white/55">
+              <span className="glass-dark rounded-full px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-[0.12em] text-white/85">{roleName(user, lang)}</span>
+              <span>{today}</span>
+              <WeatherChip weather={scene.weather} lang={lang} />
             </div>
-            <h1 className="mt-1 text-[30px] font-extrabold leading-tight tracking-tight text-chakra-500">{area}</h1>
-            <p className="mt-1 text-[18px] font-bold" style={{ color: ink(aggregate ? urgent ?? 'green' : st.tier) }}>
+            <h1 className="mt-2.5 text-[32px] font-extrabold leading-tight tracking-tight sm:text-[36px]">{area}</h1>
+            <p className="mt-1.5 flex flex-wrap items-center gap-x-2.5 text-[16px] font-semibold text-white/90">
+              <span className="relative flex h-2.5 w-2.5" aria-hidden="true">
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full opacity-60" style={{ background: statusGlow }} />
+                <span className="relative inline-flex h-2.5 w-2.5 rounded-full" style={{ background: statusGlow }} />
+              </span>
               {headline}
-              <span className="font-semibold text-ink-400"> · {L(`${st.places} place${st.places !== 1 ? 's' : ''} monitored`, `${st.places} निगरानी स्थान`)}</span>
             </p>
-            {brief.brief[lang]?.[1] && <p className="mt-1.5 max-w-2xl text-[13.5px] leading-snug text-ink-300">{brief.brief[lang][1]}</p>}
+            {brief.brief[lang]?.[1] && <p className="mt-2 max-w-2xl text-[13.5px] leading-relaxed text-white/60">{brief.brief[lang][1]}</p>}
           </div>
 
-          <div className="w-full sm:w-auto sm:min-w-[300px]">
-            <div className="flex h-3 overflow-hidden rounded-full bg-ink-800" aria-hidden="true">
-              {['red', 'orange', 'yellow', 'green'].map((t) =>
-                st.counts[t] ? <span key={t} style={{ width: `${(100 * st.counts[t]) / total}%`, background: tierColour(t) }} /> : null,
-              )}
+          <div className="glass-dark rounded-2xl p-3.5">
+            <div className="mb-2 flex items-baseline justify-between text-[11px] font-bold uppercase tracking-[0.12em] text-white/50">
+              <span>{L('By risk level', 'जोखिम स्तर अनुसार')}</span>
+              <span className="normal-case tracking-normal">{L(`${st.places} monitored`, `${st.places} निगरानी`)}</span>
             </div>
-            <div className="mt-3 grid grid-cols-4 gap-2">
+            <ul className="space-y-2">
               {['red', 'orange', 'yellow', 'green'].map((t) => (
-                <div key={t} className="rounded-xl border bg-white px-2 py-2 text-center" style={{ borderColor: st.counts[t] ? `${tierColour(t)}80` : '#E5EAF0' }}>
-                  <div className="font-mono text-[22px] font-extrabold leading-none" style={{ color: st.counts[t] ? tierColour(t) : '#A3AEBB' }}>{st.counts[t]}</div>
-                  <div className="mt-1 text-[10px] font-bold uppercase tracking-wide text-ink-500">{L(TIER_LABELS[t].en, TIER_LABELS[t].hi)}</div>
-                </div>
+                <li key={t} className="grid grid-cols-[10px_1fr_auto] items-center gap-x-2.5">
+                  <span className="h-2.5 w-2.5 rounded-full" style={{ background: GLOW[t], opacity: st.counts[t] ? 1 : 0.3 }} />
+                  <span className="min-w-0">
+                    <span className={`block text-[12.5px] font-semibold ${st.counts[t] ? 'text-white/90' : 'text-white/40'}`}>{L(TIER_LABELS[t].en, TIER_LABELS[t].hi)}</span>
+                    <span className="mt-1 block h-1 overflow-hidden rounded-full bg-white/10">
+                      <span className="block h-full rounded-full transition-[width] duration-700" style={{ width: `${(100 * st.counts[t]) / total}%`, background: GLOW[t] }} />
+                    </span>
+                  </span>
+                  <span className={`w-7 text-right font-mono text-[16px] font-bold ${st.counts[t] ? 'text-white' : 'text-white/35'}`}>{st.counts[t]}</span>
+                </li>
               ))}
-            </div>
+            </ul>
           </div>
         </div>
 
-        <div className="flex flex-wrap items-center gap-3 border-t border-ink-800/80 bg-white/70 px-6 py-3 sm:px-8">
-          <span className="flex items-center gap-2 text-[12.5px] text-ink-400">
-            <span className="relative flex h-2.5 w-2.5">
-              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-indiagreen-500 opacity-50" />
-              <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-indiagreen-500" />
-            </span>
+        <div className="relative flex flex-wrap items-center gap-3 border-t border-white/15 bg-white/[0.07] px-6 py-3 backdrop-blur-md sm:px-8">
+          <span className="flex items-center gap-2 text-[12.5px] text-white/55">
+            <span className="h-2 w-2 rounded-full bg-aurora-mint" aria-hidden="true" />
             {L(`Updated ${updated} IST · updates automatically`, `अद्यतन ${updated} IST · स्वतः अद्यतन`)}
           </span>
           <span className="ml-auto flex flex-wrap gap-2">
             {onOpenCopilot && (
-              <button
-                type="button"
-                onClick={onOpenCopilot}
-                className="btn border-chakra-500 bg-chakra-500 px-3.5 py-1.5 text-[12.5px] text-white hover:bg-[#123A78] hover:text-white"
-              >
-                <Sparkle size={14} />
-                {L('Ask AI about my area', 'मेरे क्षेत्र के बारे में एआई से पूछें')}
+              <button type="button" onClick={onOpenCopilot} className="btn-ai text-[12.5px]">
+                <span className="relative text-aurora-cyan">
+                  <Sparkle size={14} />
+                </span>
+                <span className="relative">{L('Ask AI about my area', 'मेरे क्षेत्र के बारे में एआई से पूछें')}</span>
               </button>
             )}
             {districtTown && (
-              <a href={href(`/hotspots/${districtTown.id}`)} className="btn px-3 py-1.5 text-[12.5px]">
+              <a href={href(`/hotspots/${districtTown.id}`)} className={darkBtn}>
                 <Icon name="grid" size={14} /> {L('Street-level map', 'गली-स्तर नक्शा')}
               </a>
             )}
-            <a href={mapHref} className="btn px-3 py-1.5 text-[12.5px]">
+            <a href={mapHref} className={darkBtn}>
               <Icon name="map" size={14} /> {L('Open map', 'नक्शा खोलें')}
             </a>
           </span>
@@ -316,7 +324,9 @@ export default function MyArea({ lang, user, brief, error, onRetry, onOpenCopilo
       {/* -------------------------------------------------------------- kpis */}
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         {kpis.map(([icon, value, label, c]) => (
-          <div key={label} className="flex items-center gap-3 rounded-2xl border border-ink-700 bg-white px-4 py-3.5 shadow-sm">
+          <div key={label} className="glass-card group relative flex items-center gap-3 overflow-hidden rounded-2xl px-4 py-3.5 transition hover:-translate-y-0.5">
+            <span className="absolute inset-x-0 top-0 h-[3px]" style={{ background: `linear-gradient(90deg, ${c}, ${c}33)` }} aria-hidden="true" />
+            <span className="pointer-events-none absolute -right-6 -top-6 h-20 w-20 rounded-full opacity-0 blur-2xl transition group-hover:opacity-100" style={{ background: `${c}40` }} aria-hidden="true" />
             <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl" style={{ background: `${c}14`, color: c }}>
               <Icon name={icon} size={20} />
             </span>
@@ -397,18 +407,20 @@ export default function MyArea({ lang, user, brief, error, onRetry, onOpenCopilo
 
         <div className="space-y-5">
           {/* -------------------------------------------------------- brief */}
-          <section className="overflow-hidden rounded-2xl border border-ink-700 bg-white shadow-sm" data-tour="my-brief">
-            <div className="bg-chakra-500 px-4 py-3 text-white">
+          <section className="ai-frame rounded-2xl" data-tour="my-brief">
+            <div className="border-b border-aurora-violet/15 px-4 py-3">
               <div className="flex items-center gap-2">
-                <Icon name="note" size={16} />
-                <h2 className="text-[14px] font-extrabold">{L("Today's brief", 'आज का सारांश')}</h2>
+                <span className="ai-chip">
+                  <Sparkle size={11} /> IRIS AI
+                </span>
+                <h2 className="text-aurora text-[15px] font-extrabold">{L("Today's brief", 'आज का सारांश')}</h2>
               </div>
-              <div className="mt-0.5 text-[11.5px] text-white/70">{today} · {L('written automatically', 'स्वतः लिखित')}</div>
+              <div className="mt-1 text-[11.5px] text-ink-500">{today} · {L('written automatically from live data', 'लाइव आँकड़ों से स्वतः लिखित')}</div>
             </div>
             <ol className="space-y-3 p-4">
               {(brief.brief[lang] ?? brief.brief.en).map((line, i) => (
                 <li key={line} className="flex gap-3 text-[13.5px] leading-snug text-ink-200">
-                  <span className="grid h-5 w-5 shrink-0 place-items-center rounded-full bg-saffron-50 font-mono text-[10.5px] font-bold text-saffron-300">{i + 1}</span>
+                  <span className="grid h-5 w-5 shrink-0 place-items-center rounded-full bg-gradient-to-br from-aurora-violet to-aurora-cyan font-mono text-[10.5px] font-bold text-white">{i + 1}</span>
                   <span>{line}</span>
                 </li>
               ))}

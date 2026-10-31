@@ -43,7 +43,7 @@ function PageShell({ title, subtitle, right, children }) {
   );
 }
 
-function Stat({ label, value, colour = '#0B2A5B', sub }) {
+function Stat({ label, value, colour = '#0F2F4F', sub }) {
   return (
     <div className="panel px-4 py-3">
       <div className="text-[10px] font-bold uppercase tracking-wider text-ink-500">{label}</div>
@@ -103,7 +103,7 @@ export function OfficialPage({ lang, onOpenStation, onViewState }) {
             target="_blank"
             rel="noreferrer"
             className="btn px-2.5 py-1 text-[11px]"
-            title={lang === 'hi' ? 'JalDrishti की चेतावनियाँ OASIS CAP 1.2 प्रारूप में (अभ्यास स्थिति, आधिकारिक नहीं)' : "JalDrishti's own warnings in OASIS CAP 1.2 (status Exercise, not official)"}
+            title={lang === 'hi' ? 'IRIS की चेतावनियाँ OASIS CAP 1.2 प्रारूप में (अभ्यास स्थिति, आधिकारिक नहीं)' : "IRIS's own warnings in OASIS CAP 1.2 (status Exercise, not official)"}
           >
             {lang === 'hi' ? 'हमारा CAP 1.2 फ़ीड ↗' : 'Our CAP 1.2 feed ↗'}
           </a>
@@ -484,7 +484,7 @@ function StateCasesMap({ lang, country, locations, gauges, alerts, gaugeByState,
     [totals.yellow, L('Towns yellow', 'पीले शहर'), '#C99700'],
     [replayDate ? '—' : totals.danger, L('CWC above danger', 'खतरे से ऊपर गेज'), '#C62828'],
     [replayDate ? '—' : totals.warning, L('CWC above warning', 'चेतावनी से ऊपर गेज'), '#E4701E'],
-    [replayDate ? '—' : totals.alerts, L('Flood alerts', 'बाढ़ चेतावनियाँ'), '#0B2A5B'],
+    [replayDate ? '—' : totals.alerts, L('Flood alerts', 'बाढ़ चेतावनियाँ'), '#0F2F4F'],
   ];
 
   const pickBar = (d) => d?.state && onPick(d.state);
@@ -510,7 +510,7 @@ function StateCasesMap({ lang, country, locations, gauges, alerts, gaugeByState,
           {[
             ['towns', L('Town risk circles', 'शहर जोखिम'), '#E4701E'],
             ['gauges', L('CWC gauges above warning', 'चेतावनी से ऊपर CWC गेज'), '#C62828'],
-            ['alerts', L('Official alerts', 'आधिकारिक चेतावनियाँ'), '#F26A1B'],
+            ['alerts', L('Official alerts', 'आधिकारिक चेतावनियाँ'), '#1A8CC4'],
           ].map(([key, label, c]) => (
             <label key={key} className={`flex cursor-pointer items-center gap-2 py-0.5 ${hi(lang)}`}>
               <input type="checkbox" className="accent-saffron-500" checked={layers[key]} onChange={() => onLayers((x) => ({ ...x, [key]: !x[key] }))} />
@@ -557,7 +557,7 @@ function StateCasesMap({ lang, country, locations, gauges, alerts, gaugeByState,
                 <CartesianGrid horizontal={false} stroke="#E3E8EF" />
                 <XAxis type="number" allowDecimals={false} tick={{ fontSize: 10, fill: '#526071' }} />
                 <YAxis type="category" dataKey="label" width={118} tick={{ fontSize: 10.5, fill: '#0F1A2A' }} interval={0} />
-                <Tooltip cursor={{ fill: 'rgba(242,106,27,0.08)' }} contentStyle={{ fontSize: 11, borderRadius: 8 }} />
+                <Tooltip cursor={{ fill: 'rgba(26,140,196,0.08)' }} contentStyle={{ fontSize: 11, borderRadius: 8 }} />
                 <Legend wrapperStyle={{ fontSize: 10.5 }} iconSize={9} />
                 <Bar dataKey="danger" stackId="g" name={L('Gauges > danger', 'गेज > खतरा')} fill="#C62828" onClick={pickBar} cursor="pointer" />
                 <Bar dataKey="warning" stackId="g" name={L('Gauges > warning', 'गेज > चेतावनी')} fill="#F4A259" onClick={pickBar} cursor="pointer" />

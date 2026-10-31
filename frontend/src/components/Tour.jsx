@@ -40,14 +40,14 @@ function buildSteps({ sampleLocation, sampleCity, mapPath = '/map', role = 'cent
       chapter: 'welcome',
       route: '/',
       target: null,
-      title: { en: 'Welcome to JalDrishti', hi: 'जलदृष्टि में आपका स्वागत है' },
+      title: { en: 'Welcome to IRIS', hi: 'आइरिस में आपका स्वागत है' },
       body: {
         en: [
-          'JalDrishti is an early-warning system for heavy rain and flooding across India. It combines weather observations, rainfall forecasts, river-flow models, terrain and official government gauges into one warning level per place — and shows you only your own area: all of India for Central, your state or your district.',
+          'IRIS is an early-warning system for heavy rain and flooding across India. It combines weather observations, rainfall forecasts, river-flow models, terrain and official government gauges into one warning level per place — and shows you only your own area: all of India for Central, your state or your district.',
           'This tour walks through every screen and feature in {N} short steps. Use Next / Back, the arrow keys, or Contents to jump to a section. You can leave at any time and replay it from the Tutorial button.',
         ],
         hi: [
-          'जलदृष्टि पूरे भारत के लिए भारी वर्षा और बाढ़ की पूर्व चेतावनी प्रणाली है। यह मौसम प्रेक्षण, वर्षा पूर्वानुमान, नदी-प्रवाह मॉडल, भूभाग और सरकारी गेज आँकड़ों को मिलाकर हर स्थान के लिए एक चेतावनी स्तर देती है — और आपको केवल आपका क्षेत्र दिखाती है: केंद्र हेतु पूरा भारत, या आपका राज्य या ज़िला।',
+          'आइरिस पूरे भारत के लिए भारी वर्षा और बाढ़ की पूर्व चेतावनी प्रणाली है। यह मौसम प्रेक्षण, वर्षा पूर्वानुमान, नदी-प्रवाह मॉडल, भूभाग और सरकारी गेज आँकड़ों को मिलाकर हर स्थान के लिए एक चेतावनी स्तर देती है — और आपको केवल आपका क्षेत्र दिखाती है: केंद्र हेतु पूरा भारत, या आपका राज्य या ज़िला।',
           'यह ट्यूटोरियल {N} छोटे चरणों में हर स्क्रीन और सुविधा दिखाता है। आगे / पीछे, तीर कुंजियाँ या "विषय-सूची" से किसी भी भाग पर जाएँ। आप कभी भी बाहर निकल सकते हैं और "ट्यूटोरियल" बटन से दोबारा देख सकते हैं।',
         ],
       },
@@ -664,8 +664,8 @@ function buildSteps({ sampleLocation, sampleCity, mapPath = '/map', role = 'cent
       target: 'al-cap',
       title: { en: 'Our CAP 1.2 feed', hi: 'हमारा CAP 1.2 फ़ीड' },
       body: {
-        en: ['JalDrishti\'s own warnings as a standard CAP 1.2 feed that any alerting system can subscribe to. Each warning is an Alert, then Updates, then an All Clear when the place returns to Green. All messages validate against the official OASIS schema.'],
-        hi: ['जलदृष्टि की अपनी चेतावनियाँ मानक CAP 1.2 फ़ीड के रूप में, जिसे कोई भी चेतावनी प्रणाली ले सकती है। हर चेतावनी पहले Alert, फिर Update, और स्थान के हरे होने पर All Clear। सभी संदेश आधिकारिक OASIS स्कीमा पर मान्य हैं।'],
+        en: ['IRIS\'s own warnings as a standard CAP 1.2 feed that any alerting system can subscribe to. Each warning is an Alert, then Updates, then an All Clear when the place returns to Green. All messages validate against the official OASIS schema.'],
+        hi: ['आइरिस की अपनी चेतावनियाँ मानक CAP 1.2 फ़ीड के रूप में, जिसे कोई भी चेतावनी प्रणाली ले सकती है। हर चेतावनी पहले Alert, फिर Update, और स्थान के हरे होने पर All Clear। सभी संदेश आधिकारिक OASIS स्कीमा पर मान्य हैं।'],
       },
     },
 
@@ -741,8 +741,8 @@ function buildSteps({ sampleLocation, sampleCity, mapPath = '/map', role = 'cent
       target: 'ab-table',
       title: { en: 'Capabilities, methods and limits', hi: 'क्षमताएँ, कार्यप्रणाली और सीमाएँ' },
       body: {
-        en: ['Each requirement of the problem statement, how JalDrishti meets it, the data behind it, and its known limits.'],
-        hi: ['समस्या कथन की हर आवश्यकता, जलदृष्टि उसे कैसे पूरा करती है, पीछे के आँकड़े, और ज्ञात सीमाएँ।'],
+        en: ['Each requirement of the problem statement, how IRIS meets it, the data behind it, and its known limits.'],
+        hi: ['समस्या कथन की हर आवश्यकता, आइरिस उसे कैसे पूरा करती है, पीछे के आँकड़े, और ज्ञात सीमाएँ।'],
       },
     },
     {
@@ -753,11 +753,11 @@ function buildSteps({ sampleLocation, sampleCity, mapPath = '/map', role = 'cent
       body: {
         en: [
           'That\'s every feature. Replay this tutorial any time from this button.',
-          'Remember: JalDrishti is a research prototype, not an official warning service. For operational warnings follow IMD, CWC and your State Disaster Management Authority.',
+          'Remember: IRIS is a research prototype, not an official warning service. For operational warnings follow IMD, CWC and your State Disaster Management Authority.',
         ],
         hi: [
           'ये सभी सुविधाएँ थीं। यह ट्यूटोरियल कभी भी इस बटन से दोबारा देखें।',
-          'ध्यान दें: जलदृष्टि शोध प्रोटोटाइप है, आधिकारिक चेतावनी सेवा नहीं। आधिकारिक चेतावनी हेतु IMD, CWC व अपने राज्य आपदा प्रबंधन प्राधिकरण का पालन करें।',
+          'ध्यान दें: आइरिस शोध प्रोटोटाइप है, आधिकारिक चेतावनी सेवा नहीं। आधिकारिक चेतावनी हेतु IMD, CWC व अपने राज्य आपदा प्रबंधन प्राधिकरण का पालन करें।',
         ],
       },
     },
@@ -957,11 +957,11 @@ export default function Tour({ lang, open, onClose, sampleLocation, sampleCity, 
             left: rect.left - PAD,
             width: rect.width + 2 * PAD,
             height: rect.height + 2 * PAD,
-            boxShadow: '0 0 0 9999px rgba(11, 42, 91, 0.55)',
+            boxShadow: '0 0 0 9999px rgba(15,47,79, 0.55)',
           }}
         />
       ) : (
-        <div className="absolute inset-0 bg-[rgba(11,42,91,0.55)]" />
+        <div className="absolute inset-0 bg-[rgba(15,47,79,0.55)]" />
       )}
 
       <div

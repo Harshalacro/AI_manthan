@@ -197,7 +197,7 @@ export default function HotspotsPage({ lang, id, locations }) {
       const rect = L.rectangle(
         [[c.lat - half, c.lon - half], [c.lat + half, c.lon + half]],
         {
-          color: isFocus ? '#0B2A5B' : weak ? '#4B5563' : '#ffffff',
+          color: isFocus ? '#0F2F4F' : weak ? '#4B5563' : '#ffffff',
           weight: isFocus ? 3 : weak ? 1.4 : 0.4,
           dashArray: weak && !isFocus ? '3 3' : null,
           fillColor: fill ?? '#ffffff',
@@ -219,7 +219,7 @@ export default function HotspotsPage({ lang, id, locations }) {
             ${lang === 'hi' ? DRIVER[c.driver].hi : DRIVER[c.driver].en}${c.inflow_share > 0 ? ` (${Math.round(c.inflow_share * 100)}% ${lang === 'hi' ? 'ऊपर से' : 'from upslope'})` : ''} · <span style="color:${EVIDENCE[c.evidence].colour}">${lang === 'hi' ? EVIDENCE[c.evidence].hi : EVIDENCE[c.evidence].en}</span>
           </div>` : ''}
           ${c.tunnels.length ? `<div style="font-size:10.5px;color:#C1121F;margin-top:2px">⚠ ${c.tunnels.join(', ')}</div>` : ''}
-          ${c.hospitals.length ? `<div style="font-size:10.5px;color:#0B2A5B;margin-top:2px">✚ ${c.hospitals.slice(0, 2).join(', ')}</div>` : ''}
+          ${c.hospitals.length ? `<div style="font-size:10.5px;color:#0F2F4F;margin-top:2px">✚ ${c.hospitals.slice(0, 2).join(', ')}</div>` : ''}
         </div>`,
         { sticky: true, opacity: 1 },
       );
@@ -264,7 +264,7 @@ export default function HotspotsPage({ lang, id, locations }) {
     for (const p of data.priorities.slice(0, 8)) {
       const badge = L.divIcon({
         className: '',
-        html: `<div style="width:22px;height:22px;border-radius:99px;background:#0B2A5B;color:#fff;font:700 11px/22px Inter,sans-serif;text-align:center;border:2px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,.4)">${p.rank}</div>`,
+        html: `<div style="width:22px;height:22px;border-radius:99px;background:#0F2F4F;color:#fff;font:700 11px/22px Inter,sans-serif;text-align:center;border:2px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,.4)">${p.rank}</div>`,
         iconSize: [22, 22],
         iconAnchor: [11, 11],
       });
@@ -471,8 +471,8 @@ export default function HotspotsPage({ lang, id, locations }) {
                     <YAxis yAxisId="r" tick={{ fontSize: 10, fill: '#6E7C8D' }} width={40} />
                     <YAxis yAxisId="c" orientation="right" tick={{ fontSize: 10, fill: '#6E7C8D' }} width={34} />
                     <Tooltip labelFormatter={(i) => hourLabel(data.timeline[i].time)} />
-                    <ReferenceLine x={data.now_index} yAxisId="r" stroke="#0B2A5B" strokeDasharray="4 3" label={{ value: lang === 'hi' ? 'अभी' : 'now', fontSize: 10, fill: '#0B2A5B', position: 'top' }} />
-                    <ReferenceLine x={hour ?? data.now_index} yAxisId="r" stroke="#F26A1B" />
+                    <ReferenceLine x={data.now_index} yAxisId="r" stroke="#0F2F4F" strokeDasharray="4 3" label={{ value: lang === 'hi' ? 'अभी' : 'now', fontSize: 10, fill: '#0F2F4F', position: 'top' }} />
+                    <ReferenceLine x={hour ?? data.now_index} yAxisId="r" stroke="#1A8CC4" />
                     <Bar yAxisId="r" dataKey="rain_mm_h" name={lang === 'hi' ? 'वर्षा मिमी/घं' : 'Rain mm/h'} fill="#7FA6DA" />
                     <Area yAxisId="c" dataKey="bandBase" stackId="band" stroke="none" fill="transparent" isAnimationActive={false} legendType="none" tooltipType="none" />
                     <Area yAxisId="c" dataKey="bandSpan" stackId="band" stroke="none" fill="#1B5FA8" fillOpacity={0.15} isAnimationActive={false} name={lang === 'hi' ? 'बाढ़ग्रस्त कोशिकाएँ: 10–90% सीमा' : 'Flooded cells: 10–90% range'} tooltipType="none" />
@@ -506,7 +506,7 @@ export default function HotspotsPage({ lang, id, locations }) {
                 {[
                   [lang === 'hi' ? 'शिखर पर उच्च' : 'High at peak', Math.max(...data.timeline.filter((x) => x.is_forecast).map((x) => x.cells_high), 0), '#C1121F'],
                   [lang === 'hi' ? 'शिखर पर सतर्क' : 'Elevated at peak', Math.max(...data.timeline.filter((x) => x.is_forecast).map((x) => x.cells_elevated), 0), '#E4701E'],
-                  [lang === 'hi' ? 'अधिकतम जलभराव' : 'Max ponding', `${Math.max(...data.timeline.map((x) => x.max_ponding_mm), 0).toFixed(0)} mm`, '#0B2A5B'],
+                  [lang === 'hi' ? 'अधिकतम जलभराव' : 'Max ponding', `${Math.max(...data.timeline.map((x) => x.max_ponding_mm), 0).toFixed(0)} mm`, '#0F2F4F'],
                 ].map(([k, v, c]) => (
                   <div key={k} className="panel-tight px-2 py-2">
                     <div className="font-mono text-xl font-extrabold" style={{ color: c }}>{v}</div>

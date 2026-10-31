@@ -1,7 +1,7 @@
 import { href } from '../lib/router';
 
 /**
- * About JalDrishti: each capability, how it works, and where to see it, followed
+ * About IRIS: each capability, how it works, and where to see it, followed
  * by the data sources and the known limits.
  */
 
@@ -156,7 +156,7 @@ export default function AboutPage({ lang }) {
     <div id="main-content" className="mx-auto w-full max-w-[1200px] space-y-5 p-4">
       <div className="border-b-2 border-saffron-500 pb-3">
         <h1 className={`text-2xl font-extrabold tracking-tight text-chakra-500 ${hi(lang)}`}>
-          {lang === 'hi' ? 'जलदृष्टि के बारे में' : 'About JalDrishti'}
+          {lang === 'hi' ? 'आइरिस के बारे में' : 'About IRIS'}
         </h1>
         <p className={`mt-1 text-[12.5px] text-ink-400 ${hi(lang)}`}>
           {lang === 'hi'

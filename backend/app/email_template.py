@@ -12,8 +12,8 @@ from html import escape
 
 from .config import APP_NAME
 
-NAVY = "#0B2A5B"
-SAFFRON = "#F26A1B"
+NAVY = "#0F2F4F"
+SKY = "#1A8CC4"
 INK = "#1F2937"
 MUTED = "#6B7280"
 LINE = "#E5E7EB"
@@ -61,15 +61,15 @@ def render(body: dict) -> str:
 
     if event in ("daily_brief", "test"):
         items = "".join(
-            f'<tr><td valign="top" style="{FONT}font-size:14px;color:{SAFFRON};padding:0 8px 8px 0;">&#9679;</td>'
+            f'<tr><td valign="top" style="{FONT}font-size:14px;color:{SKY};padding:0 8px 8px 0;">&#9679;</td>'
             f'<td style="{FONT}font-size:15px;line-height:1.5;color:{INK};padding:0 0 8px;">{escape(x)}</td></tr>'
             for x in body.get("brief") or []
         )
         if event == "test":
-            parts.append(_p("This is a test. If you are reading it, JalDrishti alerts for your area will reach you here.", "font-weight:600;"))
+            parts.append(_p("This is a test. If you are reading it, IRIS alerts for your area will reach you here.", "font-weight:600;"))
         parts.append(_box("Today in your area", f'<table role="presentation" cellpadding="0" cellspacing="0">{items}</table>', NAVY, "#F3F6FB"))
         if body.get("alert_count"):
-            parts.append(_p(f"{body['alert_count']} active alert(s) in your area — open JalDrishti for details."))
+            parts.append(_p(f"{body['alert_count']} active alert(s) in your area — open IRIS for details."))
     elif event == "alert_summary":
         cards = ""
         for it in body.get("items") or []:
@@ -148,16 +148,16 @@ def render(body: dict) -> str:
 
     title = escape(body.get("title") or EVENT_LABEL.get(event, "Flood alert"))
     return f"""<!doctype html>
-<html><body style="margin:0;padding:0;background:#EEF1F5;">
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#EEF1F5;padding:24px 12px;">
+<html><body style="margin:0;padding:0;background:#EAF4FA;">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#EAF4FA;padding:24px 12px;">
 <tr><td align="center">
 <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;background:#FFFFFF;border-radius:12px;overflow:hidden;border:1px solid {LINE};">
   <tr><td style="background:{NAVY};padding:18px 24px;">
-    <span style="font-family:Nirmala UI,Mangal,Arial,sans-serif;font-size:20px;font-weight:700;color:{SAFFRON};">जलदृष्टि</span>
-    <span style="{FONT}font-size:20px;font-weight:800;color:#FFFFFF;">&nbsp;{APP_NAME}</span>
-    <div style="{FONT}font-size:12px;color:#C7D2E3;margin-top:2px;">{escape(EVENT_LABEL.get(event, "Flood alert"))} · {escape(area)}</div>
+    <span style="font-family:Georgia,'Times New Roman',serif;font-size:24px;font-weight:600;letter-spacing:.18em;color:#FFFFFF;">{APP_NAME}</span>
+    <span style="{FONT}font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:#9ED8F2;">&nbsp; Integrated Rainfall &amp; Inundation Sentinel</span>
+    <div style="{FONT}font-size:12px;color:#C7DCEB;margin-top:4px;">{escape(EVENT_LABEL.get(event, "Flood alert"))} · {escape(area)}</div>
   </td></tr>
-  <tr><td style="height:4px;line-height:4px;font-size:0;background:linear-gradient(90deg,#FF9933 0 33%,#FFFFFF 33% 66%,#138808 66% 100%);background-color:{SAFFRON};">&nbsp;</td></tr>
+  <tr><td style="height:4px;line-height:4px;font-size:0;background:linear-gradient(90deg,#7CC8EA,#1A8CC4,#0F766E);background-color:{SKY};">&nbsp;</td></tr>
   <tr><td style="padding:22px 24px 8px;">
     {badge}
     <h1 style="margin:14px 0 12px;{FONT}font-size:22px;line-height:1.3;color:{NAVY};">{title}</h1>

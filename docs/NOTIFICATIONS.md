@@ -1,6 +1,6 @@
 # Notifications: email, WhatsApp, SMS and calls via viaSocket
 
-JalDrishti does not send messages itself. It posts one JSON **event** per message
+IRIS does not send messages itself. It posts one JSON **event** per message
 to a webhook; a [viaSocket](https://viasocket.com) flow receives it and sends the
 email, WhatsApp, SMS or voice call. Provider accounts, templates and DLT
 registration stay in viaSocket, and the control room can change routing without
@@ -10,7 +10,7 @@ Every message states that it comes from a research prototype, not an official
 warning. Send only to officials who opted in on the Notifications page — never
 to the public.
 
-## 1. Connect JalDrishti to viaSocket
+## 1. Connect IRIS to viaSocket
 
 1. In viaSocket, create a flow and choose **Webhook** as the trigger. Copy its URL.
 2. In `backend/.env` set:
@@ -26,7 +26,7 @@ to the public.
    message**. The test event appears in viaSocket's run history; use it as the
    sample payload while building the steps below.
 
-## 2. What JalDrishti sends
+## 2. What IRIS sends
 
 `POST <webhook>` with `Content-Type: application/json`:
 
@@ -44,7 +44,7 @@ to the public.
   "what_to_do": "Pre-position SDRF teams and boats; ready relief shelters; issue public advisory.",
   "message": "Short text for WhatsApp / SMS / the call script",
   "message_hi": "वही संदेश हिंदी में",
-  "sms": "JalDrishti: Patna flood risk Orange. Avoid East Boring Canal Road Underpass. Drink boiled water. Emergency 112/1078",
+  "sms": "IRIS: Patna flood risk Orange. Avoid East Boring Canal Road Underpass. Drink boiled water. Emergency 112/1078",
   "routes_to_avoid": ["East Boring Canal Road Underpass", "Ashok Rajpath", "Nehru Nagar"],
   "safety": ["Avoid these roads: …", "Do not walk or drive through flood water — …",
              "Drink only boiled or chlorinated water; …", "…", "Emergency: 112 · NDMA 1078."],
@@ -56,8 +56,8 @@ to the public.
   "link": "https://…/#/location/patna",
   "recipient": { "name": "…", "email": "…", "whatsapp": "+91…", "phone": "+91…",
                  "role": "state", "state": "Bihar", "district": null },
-  "disclaimer": "JalDrishti research prototype — not an official warning. …",
-  "source": "JalDrishti"
+  "disclaimer": "IRIS research prototype — not an official warning. …",
+  "source": "IRIS"
 }
 ```
 
@@ -67,7 +67,7 @@ HTML page — use it as the email body. `daily_brief` and `test` also carry `bri
 and `alert_count`.
 
 When they are sent: after every scoring run (every 90 minutes, sooner when a
-river gauge changes level), each new alert JalDrishti issues for the recipient's
+river gauge changes level), each new alert IRIS issues for the recipient's
 area goes to them **once** — the system decides what is alert-worthy; recipients
 only choose channels. `message` already includes the safety steps ("Stay safe:"
 list with roads to avoid, safe water, what to do); `safety` and
@@ -111,7 +111,7 @@ A second flow lets officials reply on WhatsApp:
 Replies, for numbers registered on the Notifications page only and about their
 own area only:
 
-| They send | JalDrishti replies |
+| They send | IRIS replies |
 |---|---|
 | `status` (or `hi`, `help`) | the area's brief |
 | `status patna` | that place's level and what to do (if it is in their area) |
