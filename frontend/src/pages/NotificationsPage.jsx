@@ -31,6 +31,11 @@ const EVENT = {
   ack: ['Acknowledged', 'स्वीकार किया'],
 };
 
+// The Wi-Fi alert point (wifi-alert/wifi_alert.py) runs on the laptop whose
+// hotspot it switches, so the button calls that laptop, not the API server.
+// Nothing is sent to it until the button is pressed.
+const WIFI_ALERT = (import.meta.env.VITE_WIFI_ALERT_URL ?? 'http://localhost:8091').replace(/\/+$/, '');
+
 export default function NotificationsPage({ lang, user }) {
   const L = (en, hi) => (lang === 'hi' ? hi : en);
   const hiFont = lang === 'hi' ? 'font-devanagari' : '';
@@ -86,6 +91,37 @@ export default function NotificationsPage({ lang, user }) {
       setMsg({ ok: false, text: e.message });
     } finally {
       setBusy(null);
+    }
+  };
+
+  const [wifi, setWifi] = useState({ live: false, busy: false, text: null, ok: true });
+  const broadcast = async () => {
+    const action = wifi.live ? 'stop' : 'broadcast';
+    setWifi((w) => ({ ...w, busy: true, text: null }));
+    try {
+      const r = await fetch(`${WIFI_ALERT}/api/${action}`, { method: 'POST', signal: AbortSignal.timeout(100000) });
+      const s = await r.json();
+      if (r.status === 403) throw new Error(s.error);
+      if (s.error) setWifi({ live: s.broadcasting, busy: false, ok: false, text: s.error });
+      else
+        setWifi({
+          live: s.broadcasting,
+          busy: false,
+          ok: true,
+          text: s.broadcasting
+            ? L(`Broadcasting as “${s.ssid}”. Phones that join see the alert.`, `“${s.ssid}” के रूप में प्रसारण जारी। जुड़ने वाले फ़ोन चेतावनी देखेंगे।`)
+            : L('Stopped. The hotspot is back to normal.', 'रोका गया। हॉटस्पॉट सामान्य हो गया।'),
+        });
+    } catch (e) {
+      setWifi((w) => ({
+        ...w,
+        busy: false,
+        ok: false,
+        text:
+          e instanceof TypeError || e.name === 'TimeoutError'
+            ? L('No Wi-Fi alert point on this computer. Start it first: python wifi-alert/wifi_alert.py', 'इस कंप्यूटर पर वाई-फ़ाई अलर्ट पॉइंट नहीं चल रहा। पहले चलाएँ: python wifi-alert/wifi_alert.py')
+            : e.message,
+      }));
     }
   };
 
@@ -181,18 +217,17 @@ export default function NotificationsPage({ lang, user }) {
 
         <div className="space-y-5">
           <section className="rounded-2xl border border-ink-700 bg-white p-5 shadow-sm">
-            <h2 className="text-[14px] font-extrabold text-chakra-500">{L('What you will get', 'आपको क्या मिलेगा')}</h2>
-            <ul className="mt-3 space-y-2 text-[13px] text-ink-300">
-              <li>• {L('Every alert IRIS issues for your area, the moment it appears — places at risk, rivers above danger, flood waves on the way, official warnings', 'IRIS द्वारा आपके क्षेत्र हेतु जारी हर चेतावनी, तुरंत — जोखिम में स्थान, खतरे से ऊपर नदियाँ, आती बाढ़ लहरें, आधिकारिक चेतावनियाँ')}</li>
-              <li>• {L('Clear safety advice in each message: roads and underpasses to avoid, drink only boiled water, do not cross flood water, where to go', 'हर संदेश में सुरक्षा सलाह: किन सड़कों व अंडरपास से बचें, केवल उबला पानी पिएँ, बाढ़ का पानी पार न करें, कहाँ जाएँ')}</li>
-              <li>• {L('A phone call for Red, if you ticked voice call', 'लाल स्तर पर फ़ोन कॉल, यदि आपने वॉइस कॉल चुना हो')}</li>
-              <li>• {L('An “all clear” when the place is back to Green', 'स्थान के हरे पर लौटने पर "सब सामान्य"')}</li>
-              <li>• {L('The daily brief each morning', 'हर सुबह दैनिक सारांश')}</li>
-              <li>• {L('On WhatsApp, reply ACK to acknowledge, “status” for your area, or ask a question', 'व्हाट्सऐप पर ACK भेजकर स्वीकार करें, "status" से क्षेत्र की स्थिति, या प्रश्न पूछें')}</li>
-            </ul>
-            <p className="mt-3 border-t border-ink-800 pt-3 text-[11.5px] text-ink-500">
-              {L('Each alert is sent to you once. Messages say they come from a research prototype, not an official warning.', 'हर चेतावनी आपको एक बार भेजी जाती है। संदेशों में लिखा होता है कि वे शोध प्रोटोटाइप से हैं, आधिकारिक चेतावनी नहीं।')}
+            <h2 className="text-[14px] font-extrabold text-chakra-500">{L('Wi-Fi alert broadcast', 'वाई-फ़ाई चेतावनी प्रसारण')}</h2>
+            <p className="mt-2 text-[13px] text-ink-300">
+              {L(
+                'Sends the flood alert from this laptop’s Wi-Fi hotspot to phones nearby — no app or internet needed. Everyone around sees the alert as the network name; anyone who joins gets the full alert on screen. Needs the Wi-Fi alert point running on this laptop (wifi-alert/wifi_alert.py).',
+                'इस लैपटॉप के वाई-फ़ाई हॉटस्पॉट से आस-पास के फ़ोन पर बाढ़ चेतावनी भेजता है — किसी ऐप या इंटरनेट की ज़रूरत नहीं। आस-पास सभी को नेटवर्क नाम में चेतावनी दिखती है; जुड़ने वाले को पूरी चेतावनी स्क्रीन पर मिलती है। इस लैपटॉप पर वाई-फ़ाई अलर्ट पॉइंट (wifi-alert/wifi_alert.py) चलना चाहिए।',
+              )}
             </p>
+            <button type="button" onClick={broadcast} disabled={wifi.busy} className="btn mt-4 border-chakra-500 bg-chakra-500 px-4 py-2 text-[13.5px] text-white hover:bg-[#174A70] hover:text-white">
+              {wifi.busy ? L('Working…', 'हो रहा है…') : wifi.live ? L('Stop broadcast', 'प्रसारण रोकें') : L('Broadcast alert', 'चेतावनी प्रसारित करें')}
+            </button>
+            {wifi.text && <p className={`mt-3 text-[12px] ${wifi.ok ? 'text-indiagreen-300' : 'text-risk-red'}`}>{wifi.text}</p>}
           </section>
 
           <section className="rounded-2xl border border-ink-700 bg-white shadow-sm">
