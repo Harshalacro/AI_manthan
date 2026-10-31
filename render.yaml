@@ -41,6 +41,11 @@ services:
         sync: false
       - key: JALDRISHTI_DEMO_LOGIN
         value: "1"
+      # Postgres on Neon (Dashboard -> Connect). With it, users, results and
+      # settings survive deploys and restarts; without it the free plan's
+      # SQLite file is wiped on every deploy.
+      - key: DATABASE_URL
+        sync: false
       # Alerts through viaSocket (docs/NOTIFICATIONS.md). The webhook URL and the
       # recipients are set in the dashboard. Recipients: a JSON list restored at
       # every boot, because the free plan has no disk to keep the Notifications page's

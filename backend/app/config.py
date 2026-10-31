@@ -64,6 +64,9 @@ LLM_PROVIDER = os.getenv("JALDRISHTI_LLM_PROVIDER", "auto").lower()
 # Used as an independent second rainfall forecast for multi-model consensus.
 OPENWEATHER_API_KEY = os.getenv("OPENWEATHER_API_KEY", "")
 DB_PATH = Path(os.getenv("JALDRISHTI_DB", BASE_DIR.parent / "jaldrishti.db"))
+# Postgres (e.g. Neon) connection string. When set, it replaces the SQLite file
+# above: postgresql://user:password@host/dbname?sslmode=require
+DATABASE_URL = os.getenv("DATABASE_URL", "").strip()
 
 # ---------------------------------------------------------------- scheduling
 

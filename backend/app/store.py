@@ -24,7 +24,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Iterator
 
-from .config import DB_PATH
+from .config import DATABASE_URL, DB_PATH
 
 _lock = threading.Lock()
 
@@ -102,9 +102,22 @@ def _connect() -> sqlite3.Connection:
     return conn
 
 
+USING_POSTGRES = DATABASE_URL.startswith(("postgres://", "postgresql://"))
+
+
 @contextmanager
 def db() -> Iterator[sqlite3.Connection]:
-    """Serialised connection. One writer is plenty for 40 locations."""
+    """One connection per unit of work, committed at the end.
+
+    SQLite: serialised; one writer is plenty for this load. Postgres (Neon):
+    pooled, through pgcompat so the SQLite-style SQL everywhere still works.
+    """
+    if USING_POSTGRES:
+        from . import pgcompat
+
+        with pgcompat.pool(DATABASE_URL).connection() as raw:
+            yield pgcompat.PgConn(raw)  # the pool commits on success, rolls back on error
+        return
     with _lock:
         conn = _connect()
         try:
@@ -136,11 +149,11 @@ def init_db() -> None:
 
 def start_run(trigger: str) -> int:
     with db() as conn:
-        cur = conn.execute(
-            "INSERT INTO runs (started_at, trigger, status) VALUES (?, ?, 'running')",
+        row = conn.execute(
+            "INSERT INTO runs (started_at, trigger, status) VALUES (?, ?, 'running') RETURNING id",
             (utcnow(), trigger),
-        )
-        return int(cur.lastrowid)
+        ).fetchone()
+        return int(row[0])
 
 
 def finish_run(run_id: int, status: str, locations: int, duration_ms: int, notes: str = "") -> None:
