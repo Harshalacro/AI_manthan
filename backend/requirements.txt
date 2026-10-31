@@ -9,3 +9,5 @@ numpy>=1.26
 shapely>=2.0
 # Only used when ANTHROPIC_API_KEY is set; Gemini, Groq and OpenWeatherMap use plain REST.
 anthropic>=1.0
+# Postgres (Neon) when DATABASE_URL is set; SQLite otherwise.
+psycopg[binary,pool]>=3.2
