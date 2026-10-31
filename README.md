@@ -1,10 +1,6 @@
 # IRIS · Integrated Rainfall & Inundation Sentinel
 
-**Hyperlocal flood risk for where you live — rainfall early warning & inundation prediction for India (formerly JalDrishti)**
-
-**Live demo: [hack-eosin-two.vercel.app](https://hack-eosin-two.vercel.app)**. Use
-**Quick demo** on the sign-in page to enter as an official (central, state, district) or
-a citizen, no password needed.
+**Hyperlocal flood risk for where you live — rainfall early warning & inundation prediction for India**
 
 An AI/ML early-warning system that integrates **observational weather**, **numerical
 weather prediction** rainfall forecasts, **satellite-derived terrain and hydrological
