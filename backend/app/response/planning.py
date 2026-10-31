@@ -52,9 +52,13 @@ import uuid
 
 import numpy as np
 
-from . import resources, store, travel
-from .resources import HOLDS, MOBILISE_H, RTYPES
-from .engine import LOCATIONS_BY_ID
+from app.core import store
+
+from app.ingest import travel
+
+from app.response import resources
+from app.response.resources import HOLDS, MOBILISE_H, RTYPES
+from app.scoring.engine import LOCATIONS_BY_ID
 
 log = logging.getLogger("jaldrishti.planning")
 
@@ -105,8 +109,8 @@ def calibration() -> dict:
     global _calibration
     if _calibration is not None:
         return _calibration
-    from . import risk
-    from .config import DATA_DIR
+    from app.scoring import risk
+    from app.core.config import DATA_DIR
 
     samples = json.loads((DATA_DIR / "training_samples.json").read_text(encoding="utf-8"))
     scores = np.array([risk.score_from_normalised(s["features"])["score"] for s in samples])
@@ -131,7 +135,7 @@ def p_flood(score: float) -> float:
 
 def _assets(place_id: str) -> dict | None:
     """Critical facilities in the city's flood-prone street cells (None without a street grid)."""
-    from . import safety
+    from app.response import safety
 
     grid = safety._static(place_id)
     if not grid:

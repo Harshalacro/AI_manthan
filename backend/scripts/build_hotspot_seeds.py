@@ -21,8 +21,8 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from app import hotspots  # noqa: E402
-from app.engine import LOCATIONS  # noqa: E402
+from app.hydro import hotspots  # noqa: E402
+from app.scoring.engine import LOCATIONS  # noqa: E402
 
 PAUSE_S = 6.0
 

@@ -24,7 +24,7 @@ import time
 
 import httpx
 
-from .config import CACHE_DIR
+from app.core.config import CACHE_DIR
 
 log = logging.getLogger("jaldrishti.travel")
 

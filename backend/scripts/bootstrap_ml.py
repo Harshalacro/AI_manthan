@@ -17,8 +17,8 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
-from app import store  # noqa: E402
-from app.engine import LOCATIONS, engine  # noqa: E402
+from app.core import store  # noqa: E402
+from app.scoring.engine import LOCATIONS, engine  # noqa: E402
 
 
 async def fill_climatology() -> None:

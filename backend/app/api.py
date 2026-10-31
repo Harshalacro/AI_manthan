@@ -16,13 +16,17 @@ from typing import Any
 from fastapi import APIRouter, Depends, Header, HTTPException, Query, Request, Response
 from pydantic import BaseModel, Field
 
-from . import engine as eng
-from . import cap, consensus, copilot, explain, llm, store
-from .ml import ml
-from .nowcast import status as nowcast_status
+from app.scoring import engine as eng
+from app.ai import copilot, llm
+from app.alerts import cap
+from app.core import store
+from app.ingest import consensus
+from app.scoring import explain
+from app.scoring.ml import ml
+from app.hydro.nowcast import status as nowcast_status
 
 log = logging.getLogger("jaldrishti.api")
-from .config import (
+from app.core.config import (
     ALERT_TIERS,
     APP_NAME,
     APP_TAGLINE_EN,
@@ -35,21 +39,21 @@ from .config import (
     VERSION,
     WEIGHTS,
 )
-from .engine import EVENTS, LOCATIONS, LOCATIONS_BY_ID, engine
-from .risk import load_ml_model
+from app.scoring.engine import EVENTS, LOCATIONS, LOCATIONS_BY_ID, engine
+from app.scoring.risk import load_ml_model
 
 router = APIRouter(prefix="/api")
 
 
 def _user(authorization: str | None = Header(default=None)) -> dict:
-    from .auth import current_user
+    from app.core.auth import current_user
 
     return current_user(authorization)
 
 
 def _admin(authorization: str | None = Header(default=None)) -> dict:
     """Officials only (central, state, district): citizens get 403."""
-    from .auth import require_admin
+    from app.core.auth import require_admin
 
     return require_admin(authorization)
 
@@ -69,7 +73,7 @@ def _scoped(snap, user: dict):
     """The snapshot limited to the user's places (the same object for Central)."""
     if user["role"] == "central":
         return snap
-    from .auth import in_scope
+    from app.core.auth import in_scope
 
     sub = eng.Snapshot(
         snap.run_id,
@@ -84,7 +88,7 @@ def _scoped(snap, user: dict):
 
 
 def _check_place(location_id: str, user: dict) -> dict:
-    from .auth import in_scope
+    from app.core.auth import in_scope
 
     loc = LOCATIONS_BY_ID.get(location_id)
     if loc is None:
@@ -95,7 +99,7 @@ def _check_place(location_id: str, user: dict) -> dict:
 
 
 def _scope_places(user: dict) -> list[dict]:
-    from .auth import in_scope
+    from app.core.auth import in_scope
 
     return [l for l in LOCATIONS if in_scope(l, user)]
 
@@ -103,7 +107,7 @@ def _scope_places(user: dict) -> list[dict]:
 def _gauge_in_scope(g: dict, user: dict, places: list[dict]) -> bool:
     if user["role"] == "central":
         return True
-    from .official import _haversine
+    from app.ingest.official import _haversine
 
     near = g.get("lat") is not None and any(
         _haversine(g["lat"], g["lon"], p["lat"], p["lon"]) <= GAUGE_NEAR_KM for p in places
@@ -116,7 +120,7 @@ def _gauge_in_scope(g: dict, user: dict, places: list[dict]) -> bool:
 def _alert_in_scope(a: dict, user: dict, places: list[dict]) -> bool:
     if user["role"] == "central":
         return True
-    from .official import _haversine
+    from app.ingest.official import _haversine
 
     area = (a.get("area") or "").lower()
     name = (user["district"] if user["role"] in ("district", "citizen") else user["state"]).lower()
@@ -156,7 +160,7 @@ def _require_snapshot():
 
 def _weather_meta(snapshot) -> dict:
     """How fresh the weather behind this run is, and whether the source is paused."""
-    from .sources import limit_status
+    from app.ingest.sources import limit_status
 
     as_of = getattr(snapshot, "weather_as_of", snapshot.computed_at)
     paused = limit_status()
@@ -479,7 +483,7 @@ async def location_replay(
 
 @router.get("/events", summary="The historical flood register")
 def events(location_id: str | None = None, user: dict = Depends(_user)) -> dict:
-    from .auth import in_scope
+    from app.core.auth import in_scope
 
     rows = [
         e
@@ -686,7 +690,7 @@ async def insights(date: str | None = None, user: dict = Depends(_admin)) -> dic
 @router.get("/timemachine/presets", summary="Well-documented flood days for the national Time Machine")
 def timemachine_presets(user: dict = Depends(_admin)) -> dict:
     """Severity-3, exact-day events in the user's area: the days worth replaying."""
-    from .auth import in_scope
+    from app.core.auth import in_scope
 
     rows = [
         e
@@ -714,7 +718,7 @@ def timemachine_presets(user: dict = Depends(_admin)) -> dict:
 def official_summary(user: dict = Depends(_user)) -> dict:
     from collections import Counter
 
-    from .official import official
+    from app.ingest.official import official
 
     out = official.summary()
     if user["role"] == "central":
@@ -736,7 +740,7 @@ def official_summary(user: dict = Depends(_user)) -> dict:
 
 @router.get("/official/stations", summary="CWC gauges with danger marks and live status")
 def official_stations(only_alerting: bool = False, user: dict = Depends(_user)) -> dict:
-    from .official import official
+    from app.ingest.official import official
 
     places = _scope_places(user)
     rows = [g for g in official.stations_payload(only_alerting) if _gauge_in_scope(g, user, places)]
@@ -745,7 +749,7 @@ def official_stations(only_alerting: bool = False, user: dict = Depends(_user)) 
 
 @router.get("/official/alerts", summary="Active NDMA SACHET CAP alerts")
 def official_alerts(flood_only: bool = False, user: dict = Depends(_user)) -> dict:
-    from .official import official
+    from app.ingest.official import official
 
     places = _scope_places(user)
     rows = [a for a in official.alerts if (a["flood_related"] or not flood_only) and _alert_in_scope(a, user, places)]
@@ -758,8 +762,8 @@ def official_alerts(flood_only: bool = False, user: dict = Depends(_user)) -> di
 async def official_station(code: str, user: dict = Depends(_user)) -> dict:
     # Any gauge may be opened: river profiles deliberately include gauges upstream
     # of the user's area, because that water is what arrives next.
-    from .nowcast import forecast_station
-    from .official import official
+    from app.hydro.nowcast import forecast_station
+    from app.ingest.official import official
 
     if code not in official.catalog:
         raise HTTPException(status_code=404, detail=f"Unknown CWC station '{code}'")
@@ -796,7 +800,7 @@ class RegisterRequest(BaseModel):
 
 @router.get("/auth/options", summary="Areas a user can sign in for, and whether demo sign-in is on")
 def auth_options() -> dict:
-    from .config import DEMO_LOGIN
+    from app.core.config import DEMO_LOGIN
 
     states: dict[str, list[str]] = {}
     for l in LOCATIONS:
@@ -814,7 +818,7 @@ def auth_options() -> dict:
 
 @router.post("/auth/login", summary="Sign in with username and password")
 def auth_login(req: LoginRequest) -> dict:
-    from . import auth
+    from app.core import auth
 
     user = auth.login(req.username, req.password)
     if not user:
@@ -824,7 +828,7 @@ def auth_login(req: LoginRequest) -> dict:
 
 @router.post("/auth/register", summary="Create a citizen account for a home district")
 def auth_register(req: RegisterRequest) -> dict:
-    from . import auth
+    from app.core import auth
 
     user = auth.register(req.name, req.contact, req.password, req.state, req.district, LOCATIONS)
     return {"token": auth.issue_token(user), "user": user}
@@ -832,7 +836,7 @@ def auth_register(req: RegisterRequest) -> dict:
 
 @router.post("/auth/demo", summary="One-click demo sign-in for a role and area")
 def auth_demo(req: DemoRequest) -> dict:
-    from . import auth
+    from app.core import auth
 
     user = auth.demo_user(req.role, req.state, req.district, LOCATIONS)
     return {"token": auth.issue_token(user), "user": user}
@@ -840,15 +844,15 @@ def auth_demo(req: DemoRequest) -> dict:
 
 @router.get("/auth/me", summary="The signed-in user")
 def auth_me(user: dict = Depends(_user)) -> dict:
-    from . import auth
+    from app.core import auth
 
     return user | {"label": auth.scope_label(user)}
 
 
 @router.get("/me/brief", summary="Everything about the signed-in user's area, in plain language")
 def my_brief(since: str | None = None, user: dict = Depends(_user)) -> dict:
-    from . import briefing
-    from .rivers import towns_in_path
+    from app.alerts import briefing
+    from app.hydro.rivers import towns_in_path
 
     snap = _require_snapshot()
     try:
@@ -858,7 +862,7 @@ def my_brief(since: str | None = None, user: dict = Depends(_user)) -> dict:
         waves = {}
     brief = briefing.build(user, snap, since, waves) | {"meta": _meta(snap)}
     if user["role"] == "citizen":
-        from . import safety
+        from app.response import safety
 
         # Ready-to-send advisories and SMS drafts are control-room tools.
         for al in brief["alerts"]:
@@ -883,7 +887,7 @@ class NotifyPrefs(BaseModel):
 
 
 def _waves() -> dict:
-    from .rivers import towns_in_path
+    from app.hydro.rivers import towns_in_path
 
     try:
         return {r["id"]: r["threats"] for r in towns_in_path()}
@@ -893,8 +897,8 @@ def _waves() -> dict:
 
 @router.get("/me/notify", summary="The signed-in user's notification settings and recent deliveries")
 def my_notify(user: dict = Depends(_admin)) -> dict:
-    from . import notify
-    from .config import NOTIFY_WEBHOOK_URL
+    from app.alerts import notify
+    from app.core.config import NOTIFY_WEBHOOK_URL
 
     return {
         "prefs": notify.get_prefs(user["username"]),
@@ -905,7 +909,7 @@ def my_notify(user: dict = Depends(_admin)) -> dict:
 
 @router.put("/me/notify", summary="Save notification settings")
 def save_my_notify(req: NotifyPrefs, user: dict = Depends(_admin)) -> dict:
-    from . import notify
+    from app.alerts import notify
 
     if req.enabled and not (req.email or req.whatsapp or req.phone):
         raise HTTPException(status_code=400, detail="Add at least an email, a WhatsApp number or a phone number.")
@@ -914,7 +918,7 @@ def save_my_notify(req: NotifyPrefs, user: dict = Depends(_admin)) -> dict:
 
 @router.post("/me/notify/test", summary="Send a test message through the automation webhook")
 async def test_my_notify(user: dict = Depends(_admin)) -> dict:
-    from . import notify
+    from app.alerts import notify
 
     p = notify.get_prefs(user["username"])
     if not p:
@@ -937,9 +941,9 @@ async def inbound_message(msg: InboundMessage, x_jaldrishti_secret: str | None =
     """
     import hmac
 
-    from . import briefing, notify
-    from .auth import in_scope
-    from .config import NOTIFY_INBOUND_SECRET
+    from app.alerts import briefing, notify
+    from app.core.auth import in_scope
+    from app.core.config import NOTIFY_INBOUND_SECRET
 
     if not NOTIFY_INBOUND_SECRET or not hmac.compare_digest(x_jaldrishti_secret or "", NOTIFY_INBOUND_SECRET):
         raise HTTPException(status_code=401, detail="Bad or missing X-JalDrishti-Secret.")
@@ -998,9 +1002,9 @@ def cap_alert(location_id: str) -> Response:
 
 @router.get("/rivers", summary="India river network coloured by CWC gauge status")
 def rivers_status(user: dict = Depends(_user)) -> dict:
-    from .auth import in_scope
-    from .official import official
-    from .rivers import network_status, towns_in_path
+    from app.core.auth import in_scope
+    from app.ingest.official import official
+    from app.hydro.rivers import network_status, towns_in_path
 
     net = network_status()
     towns = [r for r in towns_in_path() if in_scope(LOCATIONS_BY_ID[r["id"]], user)]
@@ -1028,7 +1032,7 @@ def rivers_status(user: dict = Depends(_user)) -> dict:
 
 
 def _upstream(loc: dict) -> list[dict]:
-    from .rivers import upstream_threats
+    from app.hydro.rivers import upstream_threats
 
     try:
         return upstream_threats(loc["lat"], loc["lon"])
@@ -1045,7 +1049,7 @@ async def city_hotspots(
     scenario_hours: int = Query(3, ge=1, le=12),
     user: dict = Depends(_user),
 ) -> dict:
-    from .hotspots import hotspots
+    from app.hydro.hotspots import hotspots
 
     _check_place(location_id, user)
     try:
@@ -1081,35 +1085,36 @@ class DispatchRequest(BaseModel):
 
 
 def _plan(trigger: str = "requested", force: bool = False) -> dict:
-    from . import planning
+    from app.response import planning
 
     return planning.current(_require_snapshot(), _waves(), trigger, force)
 
 
 @router.get("/plan", summary="Resource allocation plan for the signed-in official's area")
 def plan_get(user: dict = Depends(_admin)) -> dict:
-    from . import planning
+    from app.response import planning
 
     return planning.for_user(_plan(), user)
 
 
 @router.post("/plan/replan", summary="Re-optimise the plan now")
 def plan_replan(user: dict = Depends(_admin)) -> dict:
-    from . import planning
+    from app.response import planning
 
     return planning.for_user(_plan("manual re-plan", force=True), user)
 
 
 @router.get("/plan/history", summary="Recent plan versions with what triggered each")
 def plan_history(user: dict = Depends(_admin)) -> dict:
-    from . import planning
+    from app.response import planning
 
     return {"plans": planning.history()}
 
 
 @router.post("/plan/dispatch", summary="Dispatch plan orders: the units become deployments")
 async def plan_dispatch(req: DispatchRequest, user: dict = Depends(_admin)) -> dict:
-    from . import notify, planning, resources
+    from app.alerts import notify
+    from app.response import planning, resources
 
     plan = _plan()
     if plan["id"] != req.plan_id:
@@ -1130,7 +1135,7 @@ async def plan_dispatch(req: DispatchRequest, user: dict = Depends(_admin)) -> d
 
 @router.post("/deployments/{deployment_id}/release", summary="Return deployed units to their depot")
 def deployment_release(deployment_id: str, user: dict = Depends(_admin)) -> dict:
-    from . import resources
+    from app.response import resources
 
     resources.release(user, deployment_id)
     return {"ok": True}
@@ -1138,7 +1143,8 @@ def deployment_release(deployment_id: str, user: dict = Depends(_admin)) -> dict
 
 @router.get("/resources", summary="Depots, stock and deployments visible to the signed-in official")
 def resources_get(user: dict = Depends(_admin)) -> dict:
-    from . import resources, travel
+    from app.ingest import travel
+    from app.response import resources
 
     rows = []
     for d in resources.depots():
@@ -1159,7 +1165,7 @@ def resources_get(user: dict = Depends(_admin)) -> dict:
 
 @router.post("/resources/stock", summary="Set a depot's total stock of one resource type")
 def resources_set(req: StockUpdate, user: dict = Depends(_admin)) -> dict:
-    from . import resources
+    from app.response import resources
 
     resources.set_stock(user, req.depot_id, req.rtype, req.total)
     return {"ok": True}
@@ -1167,8 +1173,8 @@ def resources_set(req: StockUpdate, user: dict = Depends(_admin)) -> dict:
 
 @router.get("/plan/city/{location_id}", summary="Street-level deployment of a city's pumps and barricades")
 async def plan_city(location_id: str, user: dict = Depends(_admin)) -> dict:
-    from . import city_plan, resources, safety
-    from .hotspots import hotspots
+    from app.response import city_plan, resources, safety
+    from app.hydro.hotspots import hotspots
 
     loc = _check_place(location_id, user)
     plan = _plan()

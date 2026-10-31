@@ -13,7 +13,7 @@ from __future__ import annotations
 import gzip
 import json
 
-from .hotspots import CACHE_DIR, SEED_DIR
+from app.hydro.hotspots import CACHE_DIR, SEED_DIR
 
 MAX_ROUTES = 3
 

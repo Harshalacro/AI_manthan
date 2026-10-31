@@ -16,7 +16,7 @@ APP_TAGLINE_EN = "Integrated Rainfall & Inundation Sentinel"
 APP_TAGLINE_HI = "एकीकृत वर्षा एवं जलभराव प्रहरी"
 VERSION = "1.0.0"
 
-BASE_DIR = Path(__file__).resolve().parent
+BASE_DIR = Path(__file__).resolve().parent.parent  # backend/app
 DATA_DIR = BASE_DIR / "data"
 
 

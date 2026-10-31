@@ -34,8 +34,12 @@ from xml.sax.saxutils import escape as xml_escape
 
 import httpx
 
-from . import email_template, safety, store
-from .config import APP_NAME, DAILY_BRIEF_HOUR, NOTIFY_WEBHOOK_URL, PUBLIC_WEB_URL
+from app.alerts import email_template
+
+from app.core import store
+
+from app.response import safety
+from app.core.config import APP_NAME, DAILY_BRIEF_HOUR, NOTIFY_WEBHOOK_URL, PUBLIC_WEB_URL
 
 log = logging.getLogger("jaldrishti.notify")
 
@@ -260,6 +264,36 @@ def _sms(al: dict) -> str:
     return f"{APP_NAME}: {al['title_en']}.{avoid} Drink boiled water. Help 112/1078"[:160]
 
 
+SMS_ADVISORY_MAX = 600  # ~4 SMS parts; carriers join them into one message
+SMS_SHORT_MAX = 120  # one part even after a Twilio trial account's 38-character prefix (trials refuse longer)
+
+
+def _sms_short(al: dict, prefix: str = "") -> str:
+    """One-part SMS: level, place and the essentials, short enough for a Twilio trial account."""
+    tail = " Avoid flood water. Help 112/1078"
+    head = f"{prefix}{APP_NAME} {al['level'].upper()}: {al['title_en']}."
+    return _gsm(head[: SMS_SHORT_MAX - len(tail)] + tail)
+_GSM = str.maketrans({"—": "-", "–": "-", "·": "/", "•": "-", "’": "'", "‘": "'", "“": '"', "”": '"', "…": "..."})
+
+
+def _gsm(text: str) -> str:
+    """Plain GSM characters only: one dash or dot outside GSM-7 makes every part hold 70 characters instead of 153."""
+    return text.translate(_GSM)
+
+
+def _sms_advisory(al: dict) -> str:
+    """The public advisory as one long SMS: the warning, then the safety steps in priority order."""
+    steps = (al.get("safety") or {}).get("en") or []
+    head = f"{APP_NAME} FLOOD ADVISORY ({al['level'].upper()}): {al['title_en']}."
+    tail = "Research prototype, not an official warning."
+    lines = [head]
+    for s in steps:
+        if len("\n".join(lines + [f"- {s}", tail])) > SMS_ADVISORY_MAX:
+            break
+        lines.append(f"- {s}")
+    return _gsm("\n".join(lines + [tail]))
+
+
 SUMMARY_OVER = 3  # more new alerts than this in one update -> one summary message
 
 
@@ -284,7 +318,8 @@ def _alert_payload(al: dict) -> dict:
         "what_to_do": al["do_en"],
         "message": _message(al, "en"),
         "message_hi": _message(al, "hi"),
-        "sms": adv.get("sms") or _sms(al),
+        "sms": _sms_advisory(al),
+        "sms_short": _sms_short(al),
         "safety": (al.get("safety") or {}).get("en", []),
         "safety_hi": (al.get("safety") or {}).get("hi", []),
         "routes_to_avoid": (al.get("safety") or {}).get("routes", []),
@@ -336,7 +371,7 @@ async def dispatch(snapshot, waves_by_place: dict) -> dict:
     Send new alerts, escalations and all-clears to every opted-in user.
     Called once per scoring run; each alert goes to each person once.
     """
-    from . import briefing
+    from app.alerts import briefing
 
     counts = {"sent": 0, "failed": 0, "no_webhook": 0}
     prefs = _all_prefs()
@@ -396,7 +431,7 @@ async def dispatch(snapshot, waves_by_place: dict) -> dict:
 
 async def daily_brief_if_due(snapshot, waves_by_place: dict) -> int:
     """Send the daily brief once a day at DAILY_BRIEF_HOUR IST."""
-    from . import briefing
+    from app.alerts import briefing
 
     now = datetime.now(IST)
     today = now.date().isoformat()
@@ -428,6 +463,7 @@ def _brief_payload(b: dict) -> dict:
         "brief_hi": b["brief"]["hi"],
         "message": f"Daily flood brief — {label['en']}: " + " ".join(b["brief"]["en"]),
         "message_hi": f"दैनिक बाढ़ सारांश — {label['hi']}: " + " ".join(b["brief"]["hi"]),
+        "sms": (f"{APP_NAME} brief {label['en']}: " + (b["brief"]["en"][0] if b["brief"]["en"] else "") + " Help 112/1078")[:300],
         "alert_count": len(b["alerts"]),
         "voice_call": False,
         "link": _link(None),
@@ -436,7 +472,7 @@ def _brief_payload(b: dict) -> dict:
 
 async def send_test(p: dict, snapshot, waves_by_place: dict) -> str:
     """A sample message through the whole chain, marked as a test."""
-    from . import briefing
+    from app.alerts import briefing
 
     user = {"username": p["username"], "role": p["role"], "state": p.get("state"), "district": p.get("district")}
     b = briefing.build(user, snapshot, None, waves_by_place)
@@ -444,6 +480,10 @@ async def send_test(p: dict, snapshot, waves_by_place: dict) -> str:
         "title": f"TEST — {APP_NAME} notifications are working",
         "message": f"TEST from {APP_NAME}. If you received this, alerts for {b['scope']['label']['en']} will reach you here. "
         + (b["brief"]["en"][0] if b["brief"]["en"] else ""),
+        # A real advisory from the area's worst alert, so the test shows what an alert SMS looks like.
+        "sms": "TEST - " + _sms_advisory(b["alerts"][0]) if b["alerts"]
+        else f"{APP_NAME} TEST: flood alerts for {b['scope']['label']['en']} will reach this phone. Emergency 112/1078",
+        "sms_short": _sms_short(b["alerts"][0], prefix="TEST ") if b["alerts"] else f"{APP_NAME} TEST: alerts will reach this phone. Help 112/1078",
         "voice_call": "call" in p["channels"],
     }
     async with httpx.AsyncClient(headers={"User-Agent": f"{APP_NAME}-notify"}) as client:
@@ -468,9 +508,9 @@ async def send_deployment(orders: list[dict], by: dict) -> int:
     `deployment` event per recipient per destination, through the same webhook.
     Only opted-in officials whose area covers the destination receive it.
     """
-    from .auth import in_scope
-    from .engine import LOCATIONS_BY_ID
-    from .resources import RTYPES
+    from app.core.auth import in_scope
+    from app.scoring.engine import LOCATIONS_BY_ID
+    from app.response.resources import RTYPES
 
     by_place: dict[str, list[dict]] = {}
     for o in orders:
@@ -528,7 +568,7 @@ def seed_from_env() -> int:
     """
     import os
 
-    from .auth import _user_row
+    from app.core.auth import _user_row
 
     raw = os.getenv("JALDRISHTI_NOTIFY_RECIPIENTS", "").strip()
     if not raw:

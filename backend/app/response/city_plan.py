@@ -26,7 +26,7 @@ from __future__ import annotations
 
 import math
 
-from .travel import haversine_km
+from app.ingest.travel import haversine_km
 
 CITY_KMH = 20.0
 LOAD_H = 0.5

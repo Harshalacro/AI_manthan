@@ -15,7 +15,7 @@ from __future__ import annotations
 
 from typing import Sequence
 
-from .config import ALERT_TIERS
+from app.core.config import ALERT_TIERS
 
 
 def _mm(value: float | None) -> str:

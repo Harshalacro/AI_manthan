@@ -24,7 +24,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Iterator
 
-from .config import DATABASE_URL, DB_PATH
+from app.core.config import DATABASE_URL, DB_PATH
 
 _lock = threading.Lock()
 
@@ -113,7 +113,7 @@ def db() -> Iterator[sqlite3.Connection]:
     pooled, through pgcompat so the SQLite-style SQL everywhere still works.
     """
     if USING_POSTGRES:
-        from . import pgcompat
+        from app.core import pgcompat
 
         with pgcompat.pool(DATABASE_URL).connection() as raw:
             yield pgcompat.PgConn(raw)  # the pool commits on success, rolls back on error

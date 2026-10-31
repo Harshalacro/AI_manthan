@@ -19,7 +19,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from app import config, store  # noqa: E402  (config loads backend/.env)
+from app.core import config, store  # noqa: E402  (config loads backend/.env)
 
 TABLES = [
     "runs", "location_state", "observations", "climatology", "source_health",
@@ -39,8 +39,10 @@ def main() -> int:
         print(f"No SQLite database at {src_path}")
         return 1
 
-    from app import auth, notify, planning, resources
-    from app.engine import LOCATIONS
+    from app.alerts import notify
+    from app.core import auth
+    from app.response import planning, resources
+    from app.scoring.engine import LOCATIONS
 
     print("Creating tables in Postgres…")
     store.init_db()

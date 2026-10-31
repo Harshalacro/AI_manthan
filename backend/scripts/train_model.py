@@ -52,14 +52,18 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import average_precision_score, roc_auc_score
 from sklearn.model_selection import StratifiedKFold
 
-from app import features, risk, sources, store
-from app.config import (
+from app.core import store
+
+from app.ingest import sources
+
+from app.scoring import features, risk
+from app.core.config import (
     CLIMATOLOGY_END_YEAR,
     CLIMATOLOGY_START_YEAR,
     ML_MODEL_PATH,
 )
-from app.engine import EVENTS, LOCATIONS, engine
-from app.risk import FEATURE_ORDER
+from app.scoring.engine import EVENTS, LOCATIONS, engine
+from app.scoring.risk import FEATURE_ORDER
 
 EXCLUSION_DAYS = 7      # near an event, a location is neither a clean 1 nor a clean 0
 LOOKBACK_DAYS = 10      # archive window needed to build 72h/7d accumulations

@@ -37,8 +37,8 @@ import time
 
 from fastapi import Header, HTTPException
 
-from . import store
-from .config import DEMO_LOGIN, SEED_PASSWORD, TOKEN_HOURS
+from app.core import store
+from app.core.config import DEMO_LOGIN, SEED_PASSWORD, TOKEN_HOURS
 
 PBKDF2_ITERATIONS = 200_000
 ADMIN_ROLES = ("central", "state", "district")

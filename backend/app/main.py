@@ -17,9 +17,9 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
-from . import store
-from .api import router
-from .config import (
+from app.core import store
+from app.api import router
+from app.core.config import (
     APP_NAME,
     APP_TAGLINE_EN,
     CORS_ORIGIN_REGEX,
@@ -28,7 +28,7 @@ from .config import (
     REFRESH_ON_STARTUP,
     VERSION,
 )
-from .engine import engine
+from app.scoring.engine import engine
 
 log = logging.getLogger("jaldrishti")
 logging.basicConfig(level=logging.INFO, format="%(asctime)s  %(levelname)-7s %(name)s  %(message)s")
@@ -56,7 +56,8 @@ async def _notify_loop() -> None:
     opted-in official the alerts for their area they have not had yet, and the
     daily brief once a day. Delivery goes through the automation webhook.
     """
-    from . import notify, rivers
+    from app.alerts import notify
+    from app.hydro import rivers
 
     notify.init()
     last_run = None
@@ -71,7 +72,7 @@ async def _notify_loop() -> None:
                 counts = await notify.dispatch(snap, waves)
                 last_run = snap.run_id
                 # Re-optimise resource allocation against the new risk picture.
-                from . import planning
+                from app.response import planning
 
                 try:
                     await asyncio.to_thread(planning.current, snap, waves, "new risk data")
@@ -127,8 +128,8 @@ async def _gauge_loop() -> None:
     sits beside a monitored town changes tier, re-score the towns so the
     official-data floor follows the river without waiting 90 minutes.
     """
-    from .official import official
-    from .engine import LOCATIONS
+    from app.ingest.official import official
+    from app.scoring.engine import LOCATIONS
 
     await asyncio.sleep(20)  # let the bootstrap load the catalogue first
     while True:
@@ -141,7 +142,7 @@ async def _gauge_loop() -> None:
                 log.info("gauge sweep: %d gauges reporting, %d town gauges changed tier", n, len(changed))
                 # Rebuild "towns in the path of a flood wave" from the new readings
                 # now, so no page waits for it.
-                from . import rivers
+                from app.hydro import rivers
 
                 rivers._path_cache["ts"] = 0.0
                 await asyncio.to_thread(rivers.towns_in_path)
@@ -154,8 +155,9 @@ async def _gauge_loop() -> None:
 
 async def _build_travel() -> None:
     """Road drive times from every depot to every monitored place (OSRM, cached a week)."""
-    from . import resources, travel
-    from .engine import LOCATIONS
+    from app.ingest import travel
+    from app.response import resources
+    from app.scoring.engine import LOCATIONS
 
     places = [{"id": l["id"], "lat": l["lat"], "lon": l["lon"]} for l in LOCATIONS]
     ndrf = [{"id": d["id"], "lat": d["lat"], "lon": d["lon"]} for d in resources.depots() if d["kind"] == "ndrf"]
@@ -171,7 +173,7 @@ async def _bootstrap() -> None:
       3. re-score, now with real seasonal context
     """
     try:
-        from .official import official
+        from app.ingest.official import official
 
         if official.catalog_stale():
             n = await official.build_catalog()
@@ -180,7 +182,7 @@ async def _bootstrap() -> None:
         log.warning("CWC catalogue unavailable, continuing model-only: %s", exc)
 
     try:
-        from .config import DATA_DIR
+        from app.core.config import DATA_DIR
 
         seeded = store.seed_climatology(DATA_DIR / "climatology_seed.json.gz")
         if seeded:
@@ -212,14 +214,14 @@ async def lifespan(app: FastAPI):
     store.init_db()
     log.info("%s %s starting; refresh every %d min", APP_NAME, VERSION, REFRESH_MINUTES)
     try:
-        from . import auth
-        from .engine import LOCATIONS
+        from app.core import auth
+        from app.scoring.engine import LOCATIONS
 
-        from . import notify
+        from app.alerts import notify
 
         notify.init()
         added = auth.init(LOCATIONS)
-        from . import planning, resources
+        from app.response import planning, resources
 
         resources.init()
         planning.init()

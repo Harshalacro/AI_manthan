@@ -34,8 +34,12 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from app import features, risk, sources, store
-from app.engine import EVENTS, LOCATIONS, LOCATIONS_BY_ID, engine
+from app.core import store
+
+from app.ingest import sources
+
+from app.scoring import features, risk
+from app.scoring.engine import EVENTS, LOCATIONS, LOCATIONS_BY_ID, engine
 
 EXCLUSION_DAYS = 7
 LOOKBACK_DAYS = 10

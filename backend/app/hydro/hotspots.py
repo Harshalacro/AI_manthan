@@ -44,17 +44,19 @@ from pathlib import Path
 import httpx
 import numpy as np
 
-from . import propagation, sources
-from .config import CACHE_DIR as CACHE_ROOT, OPEN_METEO_ELEVATION, OPEN_METEO_FORECAST, TIMEZONE
-from .engine import LOCATIONS_BY_ID
-from .features import _now_index
+from app.hydro import propagation
+
+from app.ingest import sources
+from app.core.config import CACHE_DIR as CACHE_ROOT, OPEN_METEO_ELEVATION, OPEN_METEO_FORECAST, TIMEZONE
+from app.scoring.engine import LOCATIONS_BY_ID
+from app.scoring.features import _now_index
 
 log = logging.getLogger("jaldrishti.hotspots")
 
 N = 16
 STEP = 0.0072  # degrees, ~800 m
 CACHE_DIR = CACHE_ROOT / "hotspots"
-SEED_DIR = Path(__file__).resolve().parent / "data" / "hotspots"
+SEED_DIR = Path(__file__).resolve().parent.parent / "data" / "hotspots"
 OVERPASS = [
     "https://maps.mail.ru/osm/tools/overpass/api/interpreter",
     "https://overpass-api.de/api/interpreter",
@@ -436,7 +438,7 @@ def _rain_fallback(lid: str, lats: list[float], lons: list[float], cached: tuple
     except (OSError, ValueError):
         pass
 
-    from .engine import engine
+    from app.scoring.engine import engine
 
     hourly = (engine.raw.get(lid, ({}, {}))[0] or {}).get("hourly") or {}
     if hourly.get("time") and hourly.get("precipitation"):

@@ -27,7 +27,7 @@ import math
 from datetime import date, datetime, timedelta
 from typing import Any, Sequence
 
-from .config import (
+from app.core.config import (
     ALERT_TIERS,
     DISCHARGE_PCTL_KNOTS,
     DISCHARGE_RATIO_KNOTS,

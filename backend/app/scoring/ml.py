@@ -32,8 +32,8 @@ from typing import Sequence
 
 import numpy as np
 
-from .config import DATA_DIR, FACTOR_LABELS, WEIGHTS
-from .risk import FEATURE_ORDER, load_ml_model
+from app.core.config import DATA_DIR, FACTOR_LABELS, WEIGHTS
+from app.scoring.risk import FEATURE_ORDER, load_ml_model
 
 log = logging.getLogger("jaldrishti.ml")
 

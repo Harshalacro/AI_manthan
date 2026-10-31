@@ -17,7 +17,11 @@ computed automatically on every refresh so nobody has to go looking.
 
 from __future__ import annotations
 
-from . import auth, copilot, safety, store
+from app.ai import copilot
+
+from app.core import auth, store
+
+from app.response import safety
 
 TIER_RANK = {"green": 0, "yellow": 1, "orange": 2, "red": 3}
 TIER_WORD = {

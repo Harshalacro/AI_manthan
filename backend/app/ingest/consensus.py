@@ -19,8 +19,8 @@ from typing import Sequence
 
 import httpx
 
-from . import store
-from .config import OPENWEATHER_API_KEY
+from app.core import store
+from app.core.config import OPENWEATHER_API_KEY
 
 URL = "https://api.openweathermap.org/data/2.5/forecast"
 

@@ -20,10 +20,14 @@ from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any, Sequence
 
-from . import consensus, explain, features, risk, sources, store
-from .ml import ml
-from .official import official
-from .config import (
+from app.core import store
+
+from app.ingest import consensus, sources
+
+from app.scoring import explain, features, risk
+from app.scoring.ml import ml
+from app.ingest.official import official
+from app.core.config import (
     CACHE_DIR,
     DATA_DIR,
     REFRESH_MINUTES,
@@ -148,7 +152,7 @@ class Engine:
             confidence["value"] = round(min(1.0, confidence["value"] + 0.15), 3)
             confidence["reasons_en"].insert(0, f"Observed river level from CWC gauge {g['name']} ({g['distance_km']} km)")
             confidence["reasons_hi"].insert(0, f"केंद्रीय जल आयोग गेज {g['name']} ({g['distance_km']} किमी) से प्रेक्षित नदी स्तर")
-            from .config import confidence_for as _cf
+            from app.core.config import confidence_for as _cf
             lvl = _cf(confidence["value"])
             confidence.update(level=lvl["key"], label_en=lvl["label_en"], label_hi=lvl["label_hi"])
         trajectory = risk.project_trajectory(fv, norm)

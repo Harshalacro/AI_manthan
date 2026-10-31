@@ -25,7 +25,7 @@ from typing import Sequence
 
 import httpx
 
-from .config import (
+from app.core.config import (
     ANTHROPIC_API_KEY,
     ANTHROPIC_MODEL,
     GEMINI_API_KEY,

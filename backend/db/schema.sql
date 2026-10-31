@@ -10,7 +10,7 @@
 -- No data is included. Timestamps and JSON documents are stored as TEXT.
 
 -- ------------------------------------------------------------
--- Risk engine (app/store.py)
+-- Risk engine (app/core/store.py)
 
 CREATE TABLE IF NOT EXISTS runs (
     id           BIGSERIAL PRIMARY KEY,
@@ -65,7 +65,7 @@ CREATE TABLE IF NOT EXISTS source_health (
 );
 
 -- ------------------------------------------------------------
--- Accounts (app/auth.py)
+-- Accounts (app/core/auth.py)
 
 CREATE TABLE IF NOT EXISTS users (
     username    TEXT PRIMARY KEY,
@@ -83,7 +83,7 @@ CREATE TABLE IF NOT EXISTS app_meta (
 );
 
 -- ------------------------------------------------------------
--- Alerts (app/notify.py)
+-- Alerts (app/alerts/notify.py)
 
 CREATE TABLE IF NOT EXISTS notify_prefs (
     username     TEXT PRIMARY KEY,
@@ -128,7 +128,7 @@ CREATE TABLE IF NOT EXISTS notify_meta (
 );
 
 -- ------------------------------------------------------------
--- Response plan (app/planning.py)
+-- Response plan (app/response/planning.py)
 
 CREATE TABLE IF NOT EXISTS plan_runs (
     id          TEXT PRIMARY KEY,
@@ -139,7 +139,7 @@ CREATE TABLE IF NOT EXISTS plan_runs (
 );
 
 -- ------------------------------------------------------------
--- Depots and stock (app/resources.py)
+-- Depots and stock (app/response/resources.py)
 
 CREATE TABLE IF NOT EXISTS res_depots (
     id        TEXT PRIMARY KEY,

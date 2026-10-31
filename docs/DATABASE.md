@@ -21,9 +21,9 @@ accounts, results and settings each time. Neon keeps them.
 
 | What | Where |
 |---|---|
-| Reads `DATABASE_URL` | `backend/app/config.py` |
-| `store.db()`: every query goes through it; picks SQLite or Postgres | `backend/app/store.py` |
-| Translates the SQLite-style SQL (`?`, `INSERT OR REPLACE`, `PRAGMA table_info`, `AUTOINCREMENT`) to Postgres, pools connections, batches multi-row inserts | `backend/app/pgcompat.py` |
+| Reads `DATABASE_URL` | `backend/app/core/config.py` |
+| `store.db()`: every query goes through it; picks SQLite or Postgres | `backend/app/core/store.py` |
+| Translates the SQLite-style SQL (`?`, `INSERT OR REPLACE`, `PRAGMA table_info`, `AUTOINCREMENT`) to Postgres, pools connections, batches multi-row inserts | `backend/app/core/pgcompat.py` |
 | Creates all tables on startup (`CREATE TABLE IF NOT EXISTS`) | `backend/app/main.py` (calls each module's `init`) |
 | The full schema as Postgres SQL, for reading or creating an empty database | `backend/db/schema.sql` |
 | Copies an existing SQLite database into Postgres | `backend/scripts/sqlite_to_postgres.py` |
@@ -50,21 +50,21 @@ accounts, results and settings each time. Neon keeps them.
 
 | Table | Defined in | Primary key | Holds |
 |---|---|---|---|
-| `runs` | `app/store.py` | `id` (auto) | One row per data refresh: times, status, places scored |
-| `location_state` | `app/store.py` | `location_id, run_id` | Each place's score, level, confidence and full assessment (JSON) per run |
-| `observations` | `app/store.py` | `location_id, date, kind, horizon` | Daily rainfall and river readings, observed and forecast |
-| `climatology` | `app/store.py` | `location_id` | 30-year GloFAS river baseline per place |
-| `source_health` | `app/store.py` | `source` | Last check of each data source |
-| `users` | `app/auth.py` | `username` | Control-room and citizen accounts (PBKDF2 password hashes) |
-| `app_meta` | `app/auth.py` | `key` | Token-signing secret when `JALDRISHTI_SECRET` is not set |
-| `notify_prefs` | `app/notify.py` | `username` | Alert channels and contact details per user |
-| `notify_sent` | `app/notify.py` | `username, alert_id` | Which alert went to whom (no repeats) |
-| `notify_log` | `app/notify.py` | `id` | Delivery history |
-| `notify_meta` | `app/notify.py` | `key` | Small notification settings |
-| `plan_runs` | `app/planning.py` | `id` | Each deployment plan the optimiser produced (JSON) |
-| `res_depots` | `app/resources.py` | `id` | NDRF battalions and SDRF depots |
-| `res_stock` | `app/resources.py` | `depot_id, rtype` | Units per depot by type |
-| `res_deployments` | `app/resources.py` | `id` | Units dispatched from the Plan page until returned |
+| `runs` | `app/core/store.py` | `id` (auto) | One row per data refresh: times, status, places scored |
+| `location_state` | `app/core/store.py` | `location_id, run_id` | Each place's score, level, confidence and full assessment (JSON) per run |
+| `observations` | `app/core/store.py` | `location_id, date, kind, horizon` | Daily rainfall and river readings, observed and forecast |
+| `climatology` | `app/core/store.py` | `location_id` | 30-year GloFAS river baseline per place |
+| `source_health` | `app/core/store.py` | `source` | Last check of each data source |
+| `users` | `app/core/auth.py` | `username` | Control-room and citizen accounts (PBKDF2 password hashes) |
+| `app_meta` | `app/core/auth.py` | `key` | Token-signing secret when `JALDRISHTI_SECRET` is not set |
+| `notify_prefs` | `app/alerts/notify.py` | `username` | Alert channels and contact details per user |
+| `notify_sent` | `app/alerts/notify.py` | `username, alert_id` | Which alert went to whom (no repeats) |
+| `notify_log` | `app/alerts/notify.py` | `id` | Delivery history |
+| `notify_meta` | `app/alerts/notify.py` | `key` | Small notification settings |
+| `plan_runs` | `app/response/planning.py` | `id` | Each deployment plan the optimiser produced (JSON) |
+| `res_depots` | `app/response/resources.py` | `id` | NDRF battalions and SDRF depots |
+| `res_stock` | `app/response/resources.py` | `depot_id, rtype` | Units per depot by type |
+| `res_deployments` | `app/response/resources.py` | `id` | Units dispatched from the Plan page until returned |
 
 Notes:
 

@@ -24,8 +24,8 @@ from typing import Any, Iterable, Sequence
 
 import httpx
 
-from . import store
-from .config import (
+from app.core import store
+from app.core.config import (
     BATCH_COORDS,
     CLIMATOLOGY_END_YEAR,
     CLIMATOLOGY_START_YEAR,
@@ -330,7 +330,7 @@ async def build_climatology(
     percentiles. Runs in the background on first boot; until it finishes the engine
     falls back to a short-window baseline and says so in the confidence reasons.
     """
-    from .config import CLIMATOLOGY_WINDOW_DAYS
+    from app.core.config import CLIMATOLOGY_WINDOW_DAYS
 
     window = CLIMATOLOGY_WINDOW_DAYS if window is None else window
     start = f"{CLIMATOLOGY_START_YEAR}-01-01"

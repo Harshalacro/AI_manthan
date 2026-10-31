@@ -32,8 +32,8 @@ from datetime import datetime, timedelta, timezone
 from typing import Sequence
 from xml.etree import ElementTree as ET
 
-from . import store
-from .config import (
+from app.core import store
+from app.core.config import (
     APP_NAME,
     CAP_AREA_RADIUS_KM,
     CAP_SENDER,

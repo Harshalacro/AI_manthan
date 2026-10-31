@@ -10,7 +10,7 @@ from __future__ import annotations
 
 from html import escape
 
-from .config import APP_NAME
+from app.core.config import APP_NAME
 
 NAVY = "#0F2F4F"
 SKY = "#1A8CC4"

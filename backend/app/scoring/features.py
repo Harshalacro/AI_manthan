@@ -14,7 +14,7 @@ import math
 from datetime import date, datetime, timedelta
 from typing import Any, Sequence
 
-from .config import CLIMATOLOGY_WINDOW_DAYS, IMD_RAIN_CLASSES
+from app.core.config import CLIMATOLOGY_WINDOW_DAYS, IMD_RAIN_CLASSES
 
 
 def imd_rain_class(mm_24h: float) -> dict:

@@ -161,7 +161,7 @@ bars, so the prose and the chart can never disagree.
 **Response plan** (officials only) allocates rescue teams, boats, dewatering pumps and
 barricade sets across every place at risk, and re-solves on its own whenever a new
 scoring run lands, stock changes, or units are dispatched or released
-(`app/planning.py`, `app/resources.py`, `app/travel.py`).
+(`app/response/planning.py`, `app/response/resources.py`, `app/ingest/travel.py`).
 
 **How a plan is made.** A mixed-integer program (SciPy / HiGHS) maximises expected
 people reached, and it can never allocate more than a depot has available:
@@ -191,7 +191,7 @@ short and why, and where one more unit helps most (LP shadow prices).
 
 **Street level.** For a city with a street grid, **Street-level deployment** takes the
 pumps and barricades the national plan gives it and places them on 800 m cells
-(`app/city_plan.py`):
+(`app/response/city_plan.py`):
 - **Pumps** go where the ensemble expects flooding and hospitals or schools stand.
 - **Barricades** close flood-prone underpasses first, then named roads.
 - **Timing:** each placement says whether it arrives before the water.
@@ -492,31 +492,27 @@ back off on 429.
 ```
 backend/
   app/
-    main.py        FastAPI app, lifespan, asyncio refresh loop
-    config.py      IMD thresholds, model weights, alert tiers, citations
-    sources.py     Open-Meteo + GloFAS + archive clients, batched and paced
-    features.py    raw series → named, interpretable features
-    risk.py        normalisation, scoring, confidence, projection
-    explain.py     bilingual plain-language narrative + NDMA actions
-    engine.py      orchestration, snapshots, state roll-up, replay, what-if
-    ml.py          k-NN analogs, Isolation Forest anomalies, model attribution
-    llm.py         Claude (SDK) / Gemini / Groq provider chain
-    copilot.py     grounded Q&A, offline answerer, advisory generator
-    consensus.py   OpenWeatherMap second-forecast agreement
-    api.py         REST endpoints
-    store.py       SQLite persistence and migrations
-    data/          locations, enriched locations, historical register, model
-  scripts/
-    enrich_locations.py   DEM + OSM + GloFAS-snap enrichment (run once)
-    train_model.py        fit the logistic classifier
-    backtest.py           validate against the historical register
+    main.py        FastAPI app, startup, background loops (refresh, gauges, alerts)
+    api.py         every /api endpoint
+    core/          config (thresholds, weights, tiers), SQLite store, sign-in
+    ingest/        live data: Open-Meteo/GloFAS, CWC + SACHET, OpenWeatherMap, OSRM
+    scoring/       engine (refresh pass), features, risk score, explanations, ML
+    hydro/         river network, city hotspot grid, flood spread, gauge forecasts
+    response/      resource optimiser, depots, street-level deployment, safety advice
+    alerts/        notifications, daily briefing, CAP 1.2 feed, email template
+    ai/            LLM providers and the Copilot
+    data/          locations, historical register, gauges, rivers, ML model
+  scripts/         one-off builders, model training and back-tests
 frontend/
   src/
     App.jsx               shell, view state, polling, refresh
+    pages/                one file per screen
     components/           map, panels, charts, gauge, chrome, replay
     lib/                  api client, formatting, bilingual strings
   public/geo/             India state and district GeoJSON
 ```
+
+New to the code? Start with [WALKTHROUGH.md](WALKTHROUGH.md).
 
 ### Endpoints
 

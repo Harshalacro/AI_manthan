@@ -18,7 +18,7 @@ from __future__ import annotations
 import re
 from typing import Sequence
 
-from . import llm
+from app.ai import llm
 
 # Real Indian emergency numbers, used in generated advisories.
 HELPLINES = {
@@ -203,7 +203,7 @@ async def answer(question: str, history: Sequence[dict], snapshot, lang: str | N
 def offline_advisory(a: dict) -> dict:
     loc, risk, obs = a["location"], a["risk"], a["observations"]
     tier = risk["tier"]["key"]
-    from .safety import advice
+    from app.response.safety import advice
 
     steps = advice(loc["id"], tier, "place")
     routes = steps["routes"]

@@ -22,8 +22,10 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 import numpy as np
 from sklearn.metrics import roc_auc_score
 
-from app import features, risk, store
-from app.engine import EVENTS, LOCATIONS, engine
+from app.core import store
+
+from app.scoring import features, risk
+from app.scoring.engine import EVENTS, LOCATIONS, engine
 
 CACHE = Path(__file__).resolve().parent.parent / ".cache" / "archive"
 EXCLUSION_DAYS = 7

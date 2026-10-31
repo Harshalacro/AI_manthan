@@ -27,8 +27,8 @@ import uuid
 
 from fastapi import HTTPException
 
-from . import store
-from .engine import LOCATIONS
+from app.core import store
+from app.scoring.engine import LOCATIONS
 
 NDRF_SOURCE = "NDRF battalion bases and 18 teams per battalion: ndrf.gov.in / MHA; locations city-level"
 

@@ -36,10 +36,12 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from app import planning, risk  # noqa: E402
-from app.config import DATA_DIR  # noqa: E402
-from app.engine import LOCATIONS_BY_ID  # noqa: E402
-from app.resources import HOLDS, _seed_rows  # noqa: E402
+from app.response import planning
+
+from app.scoring import risk  # noqa: E402
+from app.core.config import DATA_DIR  # noqa: E402
+from app.scoring.engine import LOCATIONS_BY_ID  # noqa: E402
+from app.response.resources import HOLDS, _seed_rows  # noqa: E402
 
 RESCUE = ("rescue_team", "boat")
 

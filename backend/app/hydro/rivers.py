@@ -27,8 +27,8 @@ from functools import lru_cache
 from shapely.geometry import LineString, Point, mapping, shape
 from shapely.ops import substring
 
-from .config import DATA_DIR
-from .official import official
+from app.core.config import DATA_DIR
+from app.ingest.official import official
 
 log = logging.getLogger("jaldrishti.rivers")
 
@@ -326,7 +326,7 @@ def towns_in_path() -> list[dict]:
     """Every monitored town with a flood wave coming down its river, soonest first."""
     import time
 
-    from .engine import LOCATIONS
+    from app.scoring.engine import LOCATIONS
 
     if time.time() - _path_cache["ts"] < PATH_TTL_S:
         return _path_cache["rows"]

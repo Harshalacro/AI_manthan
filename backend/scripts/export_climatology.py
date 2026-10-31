@@ -17,8 +17,8 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from app import store  # noqa: E402
-from app.config import DATA_DIR  # noqa: E402
+from app.core import store  # noqa: E402
+from app.core.config import DATA_DIR  # noqa: E402
 
 SEED = DATA_DIR / "climatology_seed.json.gz"
 

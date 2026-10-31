@@ -44,8 +44,8 @@ from urllib.parse import urlencode
 
 import httpx
 
-from . import store
-from .config import CWC_RELAY, CWC_RELAY_TOKEN, DATA_DIR
+from app.core import store
+from app.core.config import CWC_RELAY, CWC_RELAY_TOKEN, DATA_DIR
 
 log = logging.getLogger("jaldrishti.official")
 

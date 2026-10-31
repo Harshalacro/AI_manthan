@@ -23,7 +23,7 @@ import os
 import time
 from datetime import datetime, timedelta
 
-from .official import official
+from app.ingest.official import official
 
 log = logging.getLogger("jaldrishti.nowcast")
 
