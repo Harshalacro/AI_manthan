@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { api } from '../lib/api';
 import { href } from '../lib/router';
 import { roleName } from '../lib/auth';
 import { canonicalState, directionGlyph, stateName, tierColour, TIER_LABELS, weatherInfo } from '../lib/format';
@@ -181,10 +182,48 @@ function AlertItem({ al, lang }) {
 
 const LEVEL = { green: 18, yellow: 42, orange: 66, red: 88 };
 
+/**
+ * "≋ Rivers: 2 above danger · 8 above warning" for a state or all of India, where
+ * one place's weather would misrepresent the area. Counts the CWC gauges in scope.
+ */
+function RiverChip({ gauges, lang }) {
+  if (!gauges) return null;
+  const L = (en, hi) => (lang === 'hi' ? hi : en);
+  const { danger = 0, warning = 0 } = gauges;
+  const dot = danger ? GLOW.red : warning ? GLOW.orange : GLOW.green;
+  const text = danger || warning
+    ? [
+        danger && L(`${danger} above danger`, `${danger} खतरे के ऊपर`),
+        warning && L(`${warning} above warning`, `${warning} चेतावनी के ऊपर`),
+      ].filter(Boolean).join(' · ')
+    : L('all below warning', 'सभी चेतावनी स्तर से नीचे');
+  return (
+    <a
+      href={href('/rivers')}
+      className="glass-dark inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[11.5px] font-semibold normal-case tracking-normal text-white/90 transition hover:bg-white/20"
+      title={L('Central Water Commission river gauges in this area', 'इस क्षेत्र में केंद्रीय जल आयोग के नदी गेज')}
+    >
+      <span className="h-2 w-2 rounded-full" style={{ background: dot }} aria-hidden="true" />
+      {L('River gauges', 'नदी गेज')}
+      <span className="text-white/60">· {text}</span>
+    </a>
+  );
+}
+
 export default function MyArea({ lang, user, brief, error, onRetry, onOpenCopilot }) {
   const [showAll, setShowAll] = useState(false);
+  const [gauges, setGauges] = useState(null);
   const L = (en, hi) => (lang === 'hi' ? hi : en);
   const hiFont = lang === 'hi' ? 'font-devanagari' : '';
+
+  // A state or all of India has no single weather; show its river gauges instead.
+  const aggregateView = user.role !== 'district';
+  useEffect(() => {
+    if (!aggregateView || !brief) return undefined;
+    const ctl = new AbortController();
+    api.officialSummary({ signal: ctl.signal }).then((s) => setGauges(s.gauges)).catch(() => {});
+    return () => ctl.abort();
+  }, [aggregateView, brief?.computed_at]);
 
   if (error && !brief) {
     return (
@@ -224,7 +263,8 @@ export default function MyArea({ lang, user, brief, error, onRetry, onOpenCopilo
   const mapHref = href(user.role === 'central' ? '/map' : `/state/${canonicalState(user.state)}`);
   const total = Math.max(1, st.places);
   const worseCount = brief.changes.items.filter((c) => c.worse).length;
-  const scene = sceneFor(brief.places, aggregate ? urgent : st.tier);
+  // Only a district shows its own sky; a wider area would borrow one town's rain.
+  const scene = aggregate ? sceneFor([], urgent) : sceneFor(brief.places, st.tier);
   const statusGlow = GLOW[aggregate ? urgent ?? 'green' : st.tier];
   const darkBtn = 'glass-dark inline-flex items-center gap-1.5 rounded-full px-3.5 py-2 text-[12.5px] font-bold text-white transition hover:bg-white/20';
 
@@ -260,7 +300,7 @@ export default function MyArea({ lang, user, brief, error, onRetry, onOpenCopilo
             <div className="flex flex-wrap items-center gap-x-2 text-[12px] font-semibold text-white/55">
               <span className="glass-dark rounded-full px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-[0.12em] text-white/85">{roleName(user, lang)}</span>
               <span>{today}</span>
-              <WeatherChip weather={scene.weather} lang={lang} />
+              {aggregate ? <RiverChip gauges={gauges} lang={lang} /> : <WeatherChip weather={scene.weather} lang={lang} />}
             </div>
             <h1 className="mt-2.5 text-[32px] font-extrabold leading-tight tracking-tight sm:text-[36px]">{area}</h1>
             <p className="mt-1.5 flex flex-wrap items-center gap-x-2.5 text-[16px] font-semibold text-white/90">
