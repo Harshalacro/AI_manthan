@@ -1,18 +1,13 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Bar, BarChart, CartesianGrid, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { api, capLinks } from '../lib/api';
-import IndiaMap from '../components/IndiaMap';
+import StateCard from '../components/StateCard';
 import {
   canonicalState,
-  compactPopulation,
-  compass,
-  directionGlyph,
   longDateIST,
   stateName,
-  tierColour,
   TIER_LABELS,
   TIER_ORDER,
-  weatherInfo,
 } from '../lib/format';
 import { ALERT_COLOUR, GovBadge, STATUS_STYLE } from '../components/Official';
 
@@ -229,7 +224,6 @@ export function StateMonitor({ lang, country, locations = [], alerts = [], onVie
   const [tier, setTier] = useState('all');
   const [query, setQuery] = useState('');
   const [picked, setPicked] = useState(null);
-  const [layers, setLayers] = useState({ towns: true, gauges: true, alerts: false });
 
   useEffect(() => {
     if (replayDate) return undefined;
@@ -261,7 +255,7 @@ export function StateMonitor({ lang, country, locations = [], alerts = [], onVie
     else if (sort === 'gauges') list.sort((a, b) => (gaugeByState[b.state]?.danger ?? 0) - (gaugeByState[a.state]?.danger ?? 0) || b.score - a.score);
     else if (sort === 'population') list.sort((a, b) => b.population_at_risk - a.population_at_risk);
     else if (sort === 'rain') list.sort((a, b) => (b.weather?.wettest?.precip_mm ?? 0) - (a.weather?.wettest?.precip_mm ?? 0) || b.score - a.score);
-    else list.sort((a, b) => b.score - a.score);
+    else list.sort((a, b) => TIER_ORDER.indexOf(a.tier) - TIER_ORDER.indexOf(b.tier) || b.score - a.score);
     return list;
   }, [country, sort, tier, query, gaugeByState, picked]);
 
@@ -294,152 +288,54 @@ export function StateMonitor({ lang, country, locations = [], alerts = [], onVie
         </div>
       }
     >
-      <div data-tour="sm-map">
-      <StateCasesMap
-        lang={lang}
-        country={country}
-        locations={locations}
-        gauges={replayDate ? [] : gauges}
-        alerts={replayDate ? [] : alerts}
-        gaugeByState={gaugeByState}
-        replayDate={replayDate}
-        picked={picked}
-        onPick={setPicked}
-        layers={layers}
-        onLayers={setLayers}
-        onOpenLocation={onOpenLocation}
-        onOpenStation={onOpenStation}
-      />
-      </div>
-
-      {picked && (
-        <div className="flex items-center gap-2 text-[12px] text-ink-300">
-          {lang === 'hi' ? 'दिखाया जा रहा है' : 'Showing'}: <b className="text-chakra-500">{stateName(picked, lang)}</b>
-          <button type="button" className="btn btn-ghost px-2 py-0.5 text-[11px]" onClick={() => setPicked(null)}>
-            {lang === 'hi' ? 'सभी राज्य' : 'Show all states'} ✕
-          </button>
+      <div className="grid items-start gap-4 xl:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]">
+        <div className="min-w-0 space-y-3">
+          {picked && (
+            <div className="flex items-center gap-2 text-[12px] text-ink-300">
+              {lang === 'hi' ? 'दिखाया जा रहा है' : 'Showing'}: <b className="text-chakra-500">{stateName(picked, lang)}</b>
+              <button type="button" className="btn btn-ghost px-2 py-0.5 text-[11px]" onClick={() => setPicked(null)}>
+                {lang === 'hi' ? 'सभी राज्य' : 'Show all states'} ✕
+              </button>
+            </div>
+          )}
+          <div className="grid items-start gap-3 sm:grid-cols-2 2xl:grid-cols-3" data-tour="sm-cards">
+            {rows.map((s) => (
+              <StateCard
+                key={s.state}
+                s={s}
+                lang={lang}
+                gauges={gaugeByState[s.state]}
+                towns={locations.filter((l) => canonicalState(l.state) === canonicalState(s.state))}
+                replayDate={replayDate}
+                onViewState={onViewState}
+              />
+            ))}
+          </div>
         </div>
-      )}
 
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4" data-tour="sm-cards">
-        {rows.map((s) => {
-          const g = gaugeByState[s.state];
-          const colour = tierColour(s.tier);
-          return (
-            <button
-              key={s.state}
-              type="button"
-              onClick={() => onViewState(s.state)}
-              className="panel group overflow-hidden text-left transition hover:-translate-y-0.5 hover:shadow-lg"
-            >
-              <div className="h-1.5" style={{ background: colour }} />
-              <div className="p-3.5">
-                <div className="flex items-start justify-between gap-2">
-                  <div className="min-w-0">
-                    <div className={`truncate text-[15px] font-bold text-chakra-500 ${hi(lang)}`}>{stateName(s.state, lang)}</div>
-                    <div className="text-[10.5px] text-ink-500">
-                      {s.locations} {lang === 'hi' ? 'निगरानी स्थान' : 'monitored places'}
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <div className="font-mono text-3xl font-extrabold leading-none" style={{ color: colour }}>{s.score.toFixed(0)}</div>
-                    <div className={`text-[10px] font-bold ${hi(lang)}`} style={{ color: colour }}>
-                      {lang === 'hi' ? TIER_LABELS[s.tier].hi : TIER_LABELS[s.tier].en} <span className="text-ink-500">{directionGlyph(s.direction?.key)}</span>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="mt-2.5 flex h-2 overflow-hidden rounded-full bg-ink-800">
-                  {TIER_ORDER.map((t) =>
-                    s.counts[t] ? <span key={t} style={{ width: `${(100 * s.counts[t]) / s.locations}%`, background: tierColour(t) }} /> : null,
-                  )}
-                </div>
-
-                <div className={`mt-2 truncate text-[11px] text-ink-300 ${hi(lang)}`}>
-                  {lang === 'hi' ? 'सर्वाधिक' : 'Highest'}: <b className="text-ink-100">{lang === 'hi' && s.worst.name_hi ? s.worst.name_hi : s.worst.name}</b>
-                  {s.worst.river ? ` · ${s.worst.river}` : ''}
-                </div>
-
-                <div className="mt-2 grid grid-cols-3 gap-1.5 border-t border-ink-800 pt-2 text-center">
-                  <div>
-                    <div className="font-mono text-base font-bold text-risk-red">{replayDate ? '—' : g?.danger ?? 0}</div>
-                    <div className="text-[9px] uppercase tracking-wide text-ink-500">{lang === 'hi' ? 'खतरा गेज' : 'CWC danger'}</div>
-                  </div>
-                  <div>
-                    <div className="font-mono text-base font-bold text-risk-orange">{replayDate ? '—' : g?.warning ?? 0}</div>
-                    <div className="text-[9px] uppercase tracking-wide text-ink-500">{lang === 'hi' ? 'चेतावनी गेज' : 'CWC warning'}</div>
-                  </div>
-                  <div>
-                    <div className="font-mono text-base font-bold text-chakra-500">{compactPopulation(s.population_at_risk)}</div>
-                    <div className="text-[9px] uppercase tracking-wide text-ink-500">{lang === 'hi' ? 'जोखिम में' : 'at risk'}</div>
-                  </div>
-                </div>
-                {!replayDate && <StateWeather lang={lang} wx={s.weather} />}
-                {g?.worst?.above_danger_m > 0 && (
-                  <div className="mt-2 rounded bg-risk-red/10 px-2 py-1 text-[10.5px] font-semibold text-risk-red">
-                    {g.worst.name}: +{g.worst.above_danger_m} m {lang === 'hi' ? 'खतरे के निशान से ऊपर' : 'above danger'}
-                  </div>
-                )}
-              </div>
-            </button>
-          );
-        })}
+        <div data-tour="sm-map" className="xl:sticky xl:top-0">
+          <StateCases
+            lang={lang}
+            locations={locations}
+            gauges={replayDate ? [] : gauges}
+            alerts={replayDate ? [] : alerts}
+            gaugeByState={gaugeByState}
+            replayDate={replayDate}
+            onPick={setPicked}
+          />
+        </div>
       </div>
     </PageShell>
   );
 }
 
 /**
- * Current conditions on a state card: the sky at its most populous monitored
- * place, then the spread across the state so one town doesn't stand in for all.
- */
-function StateWeather({ lang, wx }) {
-  if (!wx) return null;
-  const L = (en, hiText) => (lang === 'hi' ? hiText : en);
-  const info = weatherInfo(wx.code, wx.is_day);
-  const place = lang === 'hi' && wx.place_hi ? wx.place_hi : wx.place;
-  const wettest = lang === 'hi' && wx.wettest?.name_hi ? wx.wettest.name_hi : wx.wettest?.name;
-  return (
-    <div className="mt-2 rounded-lg border border-ink-800 bg-ink-850 px-2.5 py-2" data-tour="sm-weather">
-      <div className="flex items-center gap-2">
-        <span className="text-2xl leading-none" aria-hidden>{info.icon}</span>
-        <div className="min-w-0 flex-1">
-          <div className="flex items-baseline gap-1.5">
-            <span className="font-mono text-lg font-bold text-ink-100">{Math.round(wx.temp_c)}°C</span>
-            <span className={`truncate text-[11px] font-semibold text-ink-300 ${hi(lang)}`}>{L(info.en, info.hi)}</span>
-          </div>
-          <div className={`truncate text-[10px] text-ink-500 ${hi(lang)}`}>
-            {L('Now at', 'अभी')} {place}
-            {wx.feels_like_c != null && ` · ${L('feels', 'महसूस')} ${Math.round(wx.feels_like_c)}°`}
-          </div>
-        </div>
-      </div>
-      <div className="mt-1.5 flex flex-wrap gap-x-3 gap-y-0.5 text-[10.5px] text-ink-400">
-        <span title={L('Relative humidity', 'सापेक्ष आर्द्रता')}>💧 {wx.humidity_pct ?? '—'}%</span>
-        <span title={L('Wind', 'हवा')}>💨 {wx.wind_kmh != null ? Math.round(wx.wind_kmh) : '—'} km/h {compass(wx.wind_dir_deg)}</span>
-        <span title={L('Temperature range across monitored places', 'निगरानी स्थानों में तापमान सीमा')}>
-          🌡️ {Math.round(wx.temp_min_c)}–{Math.round(wx.temp_max_c)}°
-        </span>
-      </div>
-      {wx.raining_places > 0 && (
-        <div className={`mt-1 truncate text-[10.5px] font-semibold text-chakra-500 ${hi(lang)}`}>
-          🌧️ {L(`Raining at ${wx.raining_places} place${wx.raining_places > 1 ? 's' : ''}`, `${wx.raining_places} स्थानों पर बारिश`)}
-          {` · ${L('heaviest', 'सर्वाधिक')} ${wettest} ${wx.wettest.precip_mm} mm ${L('in 15 min', '15 मिनट में')}`}
-        </div>
-      )}
-    </div>
-  );
-}
-
-/**
- * State Monitor's map: every town as a small risk circle and every CWC gauge that
- * is above warning or danger, beside the case counts per state. Clicking a state
- * (on the map or its bar) narrows the cards below to it.
+ * Case counts beside the state cards: towns at each level, CWC gauges above
+ * warning or danger, and a bar per state. Clicking a bar narrows the cards to it.
  */
 const shortLabel = (name) => (name.length > 18 ? `${name.slice(0, 17)}…` : name);
 
-function StateCasesMap({ lang, country, locations, gauges, alerts, gaugeByState, replayDate, picked, onPick, layers, onLayers, onOpenLocation, onOpenStation }) {
-  const states = country?.states ?? [];
+function StateCases({ lang, locations, gauges, alerts, gaugeByState, replayDate, onPick }) {
   const L = (en, hiText) => (lang === 'hi' ? hiText : en);
 
   const totals = useMemo(() => {
@@ -490,46 +386,6 @@ function StateCasesMap({ lang, country, locations, gauges, alerts, gaugeByState,
   const pickBar = (d) => d?.state && onPick(d.state);
 
   return (
-    <div className="grid gap-3 xl:grid-cols-[minmax(0,1.35fr)_minmax(0,1fr)]">
-      <section className="panel relative isolate h-[440px] overflow-hidden sm:h-[560px]">
-        <IndiaMap
-          lang={lang}
-          states={states}
-          locations={locations}
-          selectedState={picked}
-          onSelectState={(name) => onPick(picked && canonicalState(name) === canonicalState(picked) ? null : name)}
-          onSelectLocation={onOpenLocation}
-          onSelectGauge={onOpenStation}
-          showDistricts={false}
-          gauges={gauges}
-          alerts={alerts}
-          layers={layers}
-        />
-        <div className="absolute right-3 top-3 z-[500] rounded-lg border border-ink-700 bg-white p-2.5 text-[11.5px] shadow-panel">
-          <div className="mb-1 text-[9.5px] font-bold uppercase tracking-wider text-ink-500">{L('Layers', 'परतें')}</div>
-          {[
-            ['towns', L('Town risk circles', 'शहर जोखिम'), '#E4701E'],
-            ['gauges', L('CWC gauges above warning', 'चेतावनी से ऊपर CWC गेज'), '#C62828'],
-            ['alerts', L('Official alerts', 'आधिकारिक चेतावनियाँ'), '#1A8CC4'],
-          ].map(([key, label, c]) => (
-            <label key={key} className={`flex cursor-pointer items-center gap-2 py-0.5 ${hi(lang)}`}>
-              <input type="checkbox" className="accent-saffron-500" checked={layers[key]} onChange={() => onLayers((x) => ({ ...x, [key]: !x[key] }))} />
-              <span className="h-2.5 w-2.5 rounded-full" style={{ background: c }} />
-              {label}
-            </label>
-          ))}
-        </div>
-        <div className="absolute bottom-3 left-3 z-[500] rounded-lg border border-ink-700 bg-white px-2.5 py-1.5 text-[11px] text-ink-300 shadow-panel">
-          {picked ? (
-            <button type="button" className="font-bold text-saffron-300" onClick={() => onPick(null)}>
-              ← {L('All India', 'पूरा भारत')}
-            </button>
-          ) : (
-            <span className={hi(lang)}>{L('Click a state to filter the cards', 'कार्ड छाँटने हेतु राज्य पर क्लिक करें')}</span>
-          )}
-        </div>
-      </section>
-
       <section className="panel flex min-w-0 flex-col p-3.5">
         <div className="flex items-center justify-between gap-2">
           <h3 className={`panel-title ${hi(lang)}`}>{L('Cases right now', 'वर्तमान स्थिति')}</h3>
@@ -568,7 +424,6 @@ function StateCasesMap({ lang, country, locations, gauges, alerts, gaugeByState,
           </div>
         )}
       </section>
-    </div>
   );
 }
 
