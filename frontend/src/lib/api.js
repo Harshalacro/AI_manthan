@@ -9,6 +9,21 @@
 
 // Empty in development (Vite proxies /api); the Render URL in production.
 const BASE = (import.meta.env.VITE_API_BASE ?? '').replace(/\/+$/, '');
+// Optional backup API (e.g. on Hugging Face Spaces) sharing the same database.
+// Calls move to it while the main one is unreachable or down, and go back to
+// the main one after a few minutes.
+const BACKUP = (import.meta.env.VITE_API_BASE_FALLBACK ?? '').replace(/\/+$/, '');
+const RETRY_MAIN_MS = 5 * 60 * 1000;
+let onBackupSince = 0;
+
+/** Bases to try, in order: the one that last worked first. */
+function bases() {
+  if (!BACKUP || BACKUP === BASE) return [BASE];
+  return onBackupSince && Date.now() - onBackupSince < RETRY_MAIN_MS ? [BACKUP, BASE] : [BASE, BACKUP];
+}
+
+// Answers that mean "this backend is down", not "your request was wrong".
+const DOWN = new Set([0, 502, 503, 504]);
 
 export class ApiError extends Error {
   constructor(message, { status, warming = false } = {}) {
@@ -25,10 +40,28 @@ export function setAuthToken(token) {
   authToken = token;
 }
 
-async function request(path, { signal, method = 'GET', body } = {}) {
+async function request(path, opts = {}) {
+  const order = bases();
+  let mainError;
+  for (const base of order) {
+    try {
+      const data = await requestFrom(base, path, opts);
+      if (base !== BACKUP) onBackupSince = 0;
+      else if (order[0] !== BACKUP) onBackupSince = Date.now(); // just switched over
+      return data;
+    } catch (err) {
+      if (err.name === 'AbortError' || !DOWN.has(err.status)) throw err;
+      if (base !== BACKUP || !mainError) mainError = err;
+    }
+  }
+  // Both down: report the main backend's error (e.g. its "warming up" 503).
+  throw mainError;
+}
+
+async function requestFrom(base, path, { signal, method = 'GET', body } = {}) {
   let res;
   try {
-    res = await fetch(`${BASE}${path}`, {
+    res = await fetch(`${base}${path}`, {
       method,
       signal,
       headers: {
