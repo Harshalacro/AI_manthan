@@ -3,8 +3,13 @@
 Broadcasts a flood alert from this Windows laptop to nearby phones that have
 **no app installed**, Android or iPhone.
 
+- **It sends the live warnings for where the laptop is.** At every Broadcast it
+  reads the laptop's location from Windows, picks the nearest monitored place
+  (e.g. Indore), and fetches the Red and Orange warnings within 150 km from the
+  backend.
 - **Everyone nearby sees the alert's network name** in their Wi-Fi list, e.g.
-  `!FLOOD DRILL INDORE pw 12345678`.
+  `!RED FLOOD INDORE pw 12345678`, or `IRIS NO ALERT INDORE pw 12345678` when
+  the area has no warning.
 - **Anyone who joins gets the full alert popping up** (the phone's "Sign in to
   network" page): level, place, what to do in English and Hindi, and
   tap-to-call emergency numbers. No internet is needed.
@@ -15,8 +20,12 @@ Broadcasts a flood alert from this Windows laptop to nearby phones that have
 cd wifi-alert
 python -m venv .venv
 .venv\Scripts\python -m pip install -r requirements.txt
-.venv\Scripts\python wifi_alert.py
+.venv\Scripts\python wifi_alert.py --api https://ai-manthan.onrender.com
 ```
+
+Location must be on: Windows Settings → Privacy & security → Location, with
+**Let desktop apps access your location** on. Otherwise Broadcast says so, and
+you can fix the area instead with `--place indore`.
 
 Then press **Broadcast alert**, either on http://localhost:8091 or on the
 website's **Notifications** page (the Wi-Fi alert broadcast card). Press **Stop
@@ -47,9 +56,9 @@ hotspot name: press Stop first.
 
 | Option | Default | Meaning |
 |---|---|---|
-| `--place` | `indore` | Location id |
-| `--mode` | `drill` | `drill`: a test message, clearly marked. `live`: the real Red and Orange warnings near the place, from the backend's public CAP feed (`/api/cap/feed.atom`) |
-| `--radius` | `150` | `live`: warnings within this many km |
+| `--place` | `auto` | `auto`: where this laptop is (Windows location), checked at every Broadcast. Or a location id from `backend/app/data/locations.json`, e.g. `indore`, `bilaspur_cg` |
+| `--mode` | `live` | `live`: the real Red and Orange warnings near the place, from the backend's public CAP feed (`/api/cap/feed.atom`). `drill`: a test message, clearly marked |
+| `--radius` | `150` | `live`: warnings within this many km of the laptop |
 | `--api` | `http://localhost:8000` | Iris backend, e.g. `https://ai-manthan.onrender.com` |
 | `--password` | `12345678` | Hotspot password, shown in the network name |
 | `--allow-origin` | | Another website allowed to press the button, e.g. `https://my-iris.vercel.app`. Allowed already: `https://ai-manthan-wheat.vercel.app` and the local dev site |
@@ -61,6 +70,7 @@ hotspot name: press Stop first.
 | `wifi_alert.py` | Broadcast / Stop, the button page at :8091, and `POST /api/broadcast`, `/api/stop`, `GET /api/status` for the website |
 | `hotspot.py` | Renames and starts the Windows Mobile Hotspot; restores it |
 | `start-hidden.vbs`, `install-startup.ps1`, `uninstall-startup.ps1` | Run it hidden at every login, or stop doing so |
+| `where.py` | The laptop's location (Windows location) and the nearest monitored place |
 | `portal.py` | The alert network name, the phone alert page (port 80), and the pop-up DNS |
 
 When a phone joins, it checks for internet. The pop-up DNS answers every name

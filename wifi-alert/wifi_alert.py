@@ -4,18 +4,22 @@ with no app installed, Android or iPhone.
 
 One button, at http://localhost:8091 or on the website's Notifications page:
 
-    Broadcast  names the laptop's Mobile Hotspot after the alert
-               ("!FLOOD DRILL INDORE pw 12345678"), so every phone nearby sees
-               it in its Wi-Fi list; a phone that joins gets the full alert
-               page popping up (portal.py).
+    Broadcast  finds where this laptop is (Windows location), reads the live
+               Red and Orange warnings for that area, and names the laptop's
+               Mobile Hotspot after them ("!RED FLOOD INDORE pw 12345678"), so
+               every phone nearby sees it in its Wi-Fi list; a phone that
+               joins gets the full alert page popping up (portal.py).
     Stop       puts the hotspot back exactly as it was.
 
-    python wifi_alert.py                       # DRILL message for Indore (testing)
-    python wifi_alert.py --place gwalior --mode live --api https://ai-manthan.onrender.com
+    python wifi_alert.py --api https://ai-manthan.onrender.com    # live, where this laptop is
+    python wifi_alert.py --place gwalior                          # live, for a set place
+    python wifi_alert.py --mode drill                             # a clearly marked test message
 
---mode drill (default) sends a clearly marked test message for the place.
---mode live sends the real Red and Orange warnings near it, read from the Iris
-backend's public CAP feed; with none, there is nothing to broadcast.
+--mode live (default) sends the real Red and Orange warnings within --radius
+km of the laptop, read from the backend's public CAP feed. With none, it
+broadcasts that there is no warning for the area ("IRIS NO ALERT INDORE").
+--place auto (default) uses this laptop's location, checked at every
+Broadcast; give a place id to fix it instead.
 
 The website's button calls this program on this laptop (the hotspot can only
 be switched here). Only the sites in ALLOWED_ORIGINS and --allow-origin may
@@ -33,7 +37,6 @@ import html
 import json
 import logging
 import logging.handlers
-import math
 import sys
 import threading
 import time
@@ -45,6 +48,7 @@ from xml.etree import ElementTree as ET
 
 import hotspot
 import portal
+import where
 
 log = logging.getLogger("wifi-alert")
 
@@ -65,12 +69,6 @@ def load_places() -> dict[str, dict]:
         return {p["id"]: p for p in json.loads(LOCATIONS.read_text(encoding="utf-8"))["locations"]}
     except (OSError, ValueError, KeyError):
         return {}
-
-
-def km(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
-    p = math.radians
-    s = math.sin(p(lat2 - lat1) / 2) ** 2 + math.cos(p(lat1)) * math.cos(p(lat2)) * math.sin(p(lon2 - lon1) / 2) ** 2
-    return 2 * 6371 * math.asin(math.sqrt(s))
 
 
 def _get(url: str) -> bytes:
@@ -96,7 +94,7 @@ def cap_warnings(api: str, places: dict[str, dict], near: dict | None, radius_km
             continue
         circle = (en.findtext(f"{CAP}area/{CAP}circle") or "").replace(",", " ").split()
         lat, lon = (float(circle[0]), float(circle[1])) if len(circle) >= 2 else (None, None)
-        if near and lat is not None and km(near["lat"], near["lon"], lat, lon) > radius_km:
+        if near and lat is not None and where.km(near["lat"], near["lon"], lat, lon) > radius_km:
             continue
         loc_id = next((g.findtext(f"{CAP}value") for g in en.iter(f"{CAP}geocode")), None) or link.rsplit("/", 1)[-1][:-4]
         place = places.get(loc_id, {})
@@ -125,8 +123,11 @@ class Station:
         self.saved: hotspot.Saved | None = None
         self.warnings: list[dict] = []
         self.places = load_places()
-        self.place = self.places.get(a.place, {})
-        self.place_name = self.place.get("name") or a.place.replace("_", " ").title()
+        self.auto = a.place == "auto"
+        self.place: dict = {} if self.auto else self.places.get(a.place, {})
+        self.place_name = "this laptop's area" if self.auto else self.place.get("name") or a.place.replace("_", " ").title()
+        self.located = "" if self.auto else "set with --place"
+        self.on_air = ""  # the network name while broadcasting
         self.error: str | None = None
         self.busy = False
         self.dns = {"dns": "off"}
@@ -136,13 +137,31 @@ class Station:
         return self.saved is not None
 
     def ssid(self) -> str:
-        return portal.ssid(self.warnings, self.place_name, self.a.password)
+        return self.on_air or portal.ssid(self.warnings, self.place_name, self.a.password)
+
+    async def find_place(self) -> dict:
+        """The point to read warnings around: this laptop's location, or the set place."""
+        if not self.auto:
+            return self.place
+        pos = await where.locate()
+        if pos is None:
+            raise hotspot.HotspotError(
+                "Could not get this laptop's location. Turn on Location in Windows Settings "
+                "(Privacy & security -> Location, and let desktop apps use it), or start with --place indore."
+            )
+        place, dist = where.nearest(self.places, pos["lat"], pos["lon"])
+        if place is None:
+            raise hotspot.HotspotError("No monitored places to match the location against (backend/app/data/locations.json).")
+        self.place, self.place_name = place, place["name"]
+        self.located = f"Windows location, {dist:.0f} km from {place['name']}"
+        log.info("location: nearest monitored place %s (%.0f km, accuracy %.0f m)", place["name"], dist, pos["accuracy_m"])
+        return {**place, "lat": pos["lat"], "lon": pos["lon"]}
 
     def _drill(self) -> list[dict]:
         now = int(time.time())
         name = self.place_name
         return [{
-            "id": f"{self.a.place}:drill-{now}", "n": f"{name} (DRILL)", "t": "orange",
+            "id": f"{self.place.get('id', self.a.place)}:drill-{now}", "n": f"{name} (DRILL)", "t": "orange",
             "d": self.place.get("district") or "", "st": self.place.get("state") or "",
             "h": f"DRILL: test of the Iris Wi-Fi flood alert for {name}. This is not a real warning.",
             "hh": f"अभ्यास: {name} के लिए Iris वाई-फ़ाई बाढ़ चेतावनी का परीक्षण। यह असली चेतावनी नहीं है।",
@@ -151,30 +170,33 @@ class Station:
             "exp": now + 2 * 3600,
         }]
 
-    def message(self) -> list[dict]:
-        if self.a.mode == "drill":
-            return self._drill()
-        near = self.place if "lat" in self.place else None
-        warnings = cap_warnings(self.a.api, self.places, near, self.a.radius)
-        if not warnings:
-            where = f"within {self.a.radius:g} km of {self.place_name}" if near else "anywhere"
-            raise hotspot.HotspotError(f"No Red or Orange warning {where} right now: nothing to broadcast.")
+    def live(self, near: dict) -> list[dict]:
+        """Red and Orange warnings within --radius km of `near`; empty means none for the area."""
+        point = near if "lat" in near else None
+        try:
+            warnings = cap_warnings(self.a.api, self.places, point, self.a.radius)
+        except (OSError, ET.ParseError) as e:
+            raise hotspot.HotspotError(f"Could not read live warnings from {self.a.api} ({e}). Is the backend up?") from e
+        log.info("live: %d Red/Orange warning(s) within %g km of %s", len(warnings), self.a.radius, self.place_name)
         return warnings
 
     async def broadcast(self) -> None:
         if self.broadcasting:
             return
-        warnings = await asyncio.to_thread(self.message)
+        near = await self.find_place()
+        warnings = self._drill() if self.a.mode == "drill" else await asyncio.to_thread(self.live, near)
         with self.lock:
             self.warnings = warnings
-        ssid = self.ssid()
+        ssid = portal.ssid(warnings, self.place_name, self.a.password)
         self.saved = await hotspot.start(ssid, self.a.password)
+        self.on_air = ssid
         log.info("broadcasting: %s", ssid)
 
     async def stop(self) -> None:
         if self.saved:
             await hotspot.stop(self.saved)
             self.saved = None
+            self.on_air = ""
             log.info("stopped; hotspot restored")
 
     def run(self, action: str) -> None:
@@ -196,7 +218,9 @@ class Station:
             "broadcasting": self.broadcasting,
             "ssid": self.ssid() if self.broadcasting else None,
             "place": self.place_name,
+            "located": self.located,
             "mode": self.a.mode,
+            "warnings": len(self.warnings) if self.broadcasting else None,
             "popup": self.dns["dns"],
             "error": self.error,
         }
@@ -230,6 +254,8 @@ def control_page(s: Station) -> bytes:
         line = f"Live as <b>{html.escape(st['ssid'] or s.ssid())}</b> · {st['clients']} phone(s) joined · pop-up: {html.escape(s.dns['dns'])}"
     else:
         line = f"{'DRILL' if s.a.mode == 'drill' else 'Live warnings'} for {html.escape(s.place_name)} · renames your hotspot while on"
+        if s.located:
+            line += f"<br><small>{html.escape(s.located)}</small>"
     return PAGE.format(
         colour=colour, action=action, label=label, disabled="disabled" if s.busy else "",
         line=line, err=f'<p class="err">{html.escape(s.error)}</p>' if s.error else "",
@@ -336,9 +362,9 @@ async def main(a: argparse.Namespace) -> None:
 
 if __name__ == "__main__":
     ap = argparse.ArgumentParser(description="Broadcast a flood alert over Wi-Fi to phones with no app.")
-    ap.add_argument("--place", default="indore", help="Location id (default indore)")
-    ap.add_argument("--mode", choices=("drill", "live"), default="drill", help="drill: test message (default); live: real warnings")
-    ap.add_argument("--radius", type=float, default=150, help="live: warnings within this many km (default 150)")
+    ap.add_argument("--place", default="auto", help="Location id, or auto: where this laptop is (default)")
+    ap.add_argument("--mode", choices=("live", "drill"), default="live", help="live: real warnings (default); drill: test message")
+    ap.add_argument("--radius", type=float, default=150, help="live: warnings within this many km of the laptop (default 150)")
     ap.add_argument("--api", default="http://localhost:8000", help="Iris backend (default http://localhost:8000)")
     ap.add_argument("--password", default=portal.PASSWORD, help="Hotspot password, shown in the network name (default 12345678)")
     ap.add_argument("--port", type=int, default=8091, help="Control page (default 8091)")
@@ -346,6 +372,10 @@ if __name__ == "__main__":
     ap.add_argument("--allow-origin", action="append", default=[], help="Another website allowed to press the button, e.g. https://my-iris.vercel.app")
     args = ap.parse_args()
     args.api = args.api.rstrip("/")
+    known = load_places()
+    if args.place != "auto" and known and args.place not in known:
+        close = ", ".join(sorted(k for k in known if k.startswith(args.place[:3]))[:5])
+        ap.error(f"unknown --place {args.place!r}" + (f"; did you mean: {close}" if close else ""))
     if sys.stderr is None:
         # Started hidden (pythonw, at login): no console, so log beside the script.
         handler = logging.handlers.RotatingFileHandler(Path(__file__).with_name("wifi_alert.log"), maxBytes=1_000_000, backupCount=1, encoding="utf-8")

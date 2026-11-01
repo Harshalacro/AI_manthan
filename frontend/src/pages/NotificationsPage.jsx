@@ -109,7 +109,11 @@ export default function NotificationsPage({ lang, user }) {
           busy: false,
           ok: true,
           text: s.broadcasting
-            ? L(`Broadcasting as “${s.ssid}”. Phones that join see the alert.`, `“${s.ssid}” के रूप में प्रसारण जारी। जुड़ने वाले फ़ोन चेतावनी देखेंगे।`)
+            ? s.mode === 'drill'
+              ? L(`Broadcasting a drill for ${s.place} as “${s.ssid}”. Phones that join see the alert.`, `${s.place} के लिए अभ्यास “${s.ssid}” के रूप में प्रसारित। जुड़ने वाले फ़ोन चेतावनी देखेंगे।`)
+              : s.warnings
+                ? L(`Broadcasting ${s.warnings} live warning(s) for ${s.place} as “${s.ssid}”. Phones that join see the alert.`, `${s.place} की ${s.warnings} लाइव चेतावनी “${s.ssid}” के रूप में प्रसारित। जुड़ने वाले फ़ोन चेतावनी देखेंगे।`)
+                : L(`No Red or Orange warning for ${s.place} right now. Broadcasting that as “${s.ssid}”.`, `अभी ${s.place} के लिए कोई लाल या नारंगी चेतावनी नहीं। यह “${s.ssid}” के रूप में प्रसारित।`)
             : L('Stopped. The hotspot is back to normal.', 'रोका गया। हॉटस्पॉट सामान्य हो गया।'),
         });
     } catch (e) {
@@ -220,8 +224,8 @@ export default function NotificationsPage({ lang, user }) {
             <h2 className="text-[14px] font-extrabold text-chakra-500">{L('Wi-Fi alert broadcast', 'वाई-फ़ाई चेतावनी प्रसारण')}</h2>
             <p className="mt-2 text-[13px] text-ink-300">
               {L(
-                'Sends the flood alert from this laptop’s Wi-Fi hotspot to phones nearby — no app or internet needed. Everyone around sees the alert as the network name; anyone who joins gets the full alert on screen. Needs the Wi-Fi alert point running on this laptop (wifi-alert/wifi_alert.py).',
-                'इस लैपटॉप के वाई-फ़ाई हॉटस्पॉट से आस-पास के फ़ोन पर बाढ़ चेतावनी भेजता है — किसी ऐप या इंटरनेट की ज़रूरत नहीं। आस-पास सभी को नेटवर्क नाम में चेतावनी दिखती है; जुड़ने वाले को पूरी चेतावनी स्क्रीन पर मिलती है। इस लैपटॉप पर वाई-फ़ाई अलर्ट पॉइंट (wifi-alert/wifi_alert.py) चलना चाहिए।',
+                'Finds where this laptop is and sends that area’s live flood warnings from its Wi-Fi hotspot to phones nearby — no app or internet needed. Everyone around sees the alert as the network name; anyone who joins gets the full alert on screen. Needs the Wi-Fi alert point running on this laptop (wifi-alert/wifi_alert.py).',
+                'यह लैपटॉप कहाँ है, यह पता करके उस क्षेत्र की लाइव बाढ़ चेतावनी इसके वाई-फ़ाई हॉटस्पॉट से आस-पास के फ़ोन पर भेजता है — किसी ऐप या इंटरनेट की ज़रूरत नहीं। आस-पास सभी को नेटवर्क नाम में चेतावनी दिखती है; जुड़ने वाले को पूरी चेतावनी स्क्रीन पर मिलती है। इस लैपटॉप पर वाई-फ़ाई अलर्ट पॉइंट (wifi-alert/wifi_alert.py) चलना चाहिए।',
               )}
             </p>
             <button type="button" onClick={broadcast} disabled={wifi.busy} className="btn mt-4 border-chakra-500 bg-chakra-500 px-4 py-2 text-[13.5px] text-white hover:bg-[#174A70] hover:text-white">
