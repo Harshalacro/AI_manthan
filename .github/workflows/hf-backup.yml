@@ -1,0 +1,29 @@
+# Rebuilds the backup API on Hugging Face Spaces after every push to main, so
+# it runs the same code as Render. Needs two repository settings (Settings ->
+# Secrets and variables -> Actions): secret HF_TOKEN (a Hugging Face write
+# token) and variable HF_SPACE (e.g. your-name/jaldrishti-api). Without them
+# the job does nothing. See docs/BACKUP_BACKEND.md.
+name: Rebuild backup API
+
+on:
+  push:
+    branches: [main]
+    paths: [backend/**, hf-space/**]
+  workflow_dispatch:
+
+jobs:
+  rebuild:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Factory rebuild the Space
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+          HF_SPACE: ${{ vars.HF_SPACE }}
+        run: |
+          if [ -z "$HF_TOKEN" ] || [ -z "$HF_SPACE" ]; then
+            echo "HF_TOKEN or HF_SPACE not set: skipping."
+            exit 0
+          fi
+          curl -fsS -X POST -H "Authorization: Bearer $HF_TOKEN" \
+            "https://huggingface.co/api/spaces/$HF_SPACE/restart?factory=true"
+          echo "Rebuild of $HF_SPACE started."
